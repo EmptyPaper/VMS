@@ -3,31 +3,99 @@
 #include <string.h>
 #include <openssl/sha.h>
 #define BUFSIZE 1024
-void* hashSha256(void * data);
+void* hashFile(FILE *fp);
+void *hashStrings(void **string);
+void *hashchars(void* string);
 
-// int main(int argc,char* argv[]){
+
+char* hashToString(unsigned char* hash){
+    char string[65];
+    for(int j =0 ; j < 32; j++){
+        fprintf(string, "%02x", hash[j]);
+    }
+    return string;
+}
+
+
+int main(int argc,char* argv[]){
 //     char * data = "Hello";
-//     unsigned char * hashString;
+    unsigned char ** hashString = malloc(sizeof(char*)*3);
 //     char * code;
-//     hashString = hashSha256(data);
-//     fprintf(stderr,"0x");
-//     for(int i =0 ; i < 32; i++){
-//         fprintf(stderr, "%x", hashString[i]);
-//     }
-//     printf("\n");
-// }
-void* hashSha256(void * data,FILE *fp){
-    size_t size = strlen(data);
+    unsigned char output[97];
+    unsigned char * z;
+
+    FILE** fp;
+    fp = (FILE**)malloc(sizeof(FILE*)*3);
+    fp[0] = fopen("./init.c","rb");
+    fp[1] = fopen("./ds.h","rb");
+    fp[2] = fopen("./HEAD","rb");
+
+    // fp[1] = fopen("./init.c", "rb");
+    if(fp == NULL)
+        perror("file error");
+    for(int i =0; i< 3; i++){
+        memcpy(output+i*32,hashFile(fp[i]),32);
+        for(int j =0 ; j < 32; j++){
+            fprintf(stderr, "%02x", output[i*32+j]);
+        }
+        fprintf(stderr,"\n");
+    }
+    output[96] = '\0';
+    for(int i = 0; i < 96; i++){
+        fprintf(stderr,"%d",output[i]);
+    }
+    fprintf(stderr,"\n");
+    z = hashchars(output);
+    // output = hashStrings(hashString);
+
+    for(int j =0 ; j < 32; j++){
+            fprintf(stderr, "%02x", z[j]);
+    }
+    fprintf(stderr,"\n");
+    // hashString [0]= hashSha256(fp);
+    // fprintf(stderr,"./init.c");
+    // for(int i =0 ; i < 32; i++){
+    //     fprintf(stderr, "%x", hashString[i]);
+    // }
+     printf("\n");
+}
+
+void* hashFile(char *path){
+    // size_t size = strlen(data);
+    FILE* fp = fopen(path,"rb");
     SHA256_CTX ctx;
     char* buffer = (char*)malloc(sizeof(char)*BUFSIZE);
     unsigned char* hashout = (unsigned char*) malloc(sizeof(char)*32);
     int bytesRead = 0;
-    // int count = size/32;
     SHA256_Init(&ctx);
+
     while((bytesRead=fread(buffer,1,BUFSIZE, fp))){
-        SHA256_Update(&ctx,buffer,bytesRead);
+            SHA256_Update(&ctx,buffer,bytesRead);
+            memset(buffer,0,BUFSIZE);
     }
-    SHA256_Update(&ctx,data,size);
+    if(bytesRead < 0)
+        perror("file read error");
+    SHA256_Final(hashout, &ctx);
+
+    fclose(fp);
+    return hashout;
+}
+
+void *hashStrings(void **string){
+    SHA256_CTX ctx;
+    unsigned char* hashout =(unsigned char*)malloc(sizeof(char)*SHA256_DIGEST_LENGTH);
+    SHA256_Init(&ctx);
+    for(int i = 0 ; i < 3;i++)
+        SHA256_Update(&ctx,string[i],strlen(string[i]));
+    SHA256_Final(hashout, &ctx);
+
+    return hashout;
+}
+void *hashchars(void* string){
+    SHA256_CTX ctx;
+    unsigned char* hashout =(unsigned char*)malloc(sizeof(char)*SHA256_DIGEST_LENGTH);
+    SHA256_Init(&ctx);
+    SHA256_Update(&ctx,string,strlen(string));
     SHA256_Final(hashout, &ctx);
     return hashout;
 }

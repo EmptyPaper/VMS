@@ -10,7 +10,7 @@ void checkIndex(){
     FILE* INDEX;
     if(access("./.VMS/index", F_OK) != -1){
         struct fileInfo* info;
-        INDEX = fopen()
+        INDEX = fopen();
     }
     else{
         DieWithError("Empty Index");
@@ -51,7 +51,7 @@ void hashChain(){
 void checkAdd(){
     struct FileInfo fInofo;
     FILE *index;
-    index = 
+    
 }
 void commit(int argc,char* argvp[]){
     
