@@ -11,6 +11,7 @@
 void* hashFile(char* path);
 void *hashStrings(void **string);
 void *hashchars(void* string);
+char* hashToString(unsigned char* hash);
 
 
 struct fileInfo{

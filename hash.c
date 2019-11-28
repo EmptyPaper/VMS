@@ -67,7 +67,15 @@ void* hashFile(char *path){
     char* buffer = (char*)malloc(sizeof(char)*BUFSIZE);
     unsigned char* hashout = (unsigned char*) malloc(sizeof(char)*32);
     int bytesRead = 0;
+    struct stat statInfo;
+    char blobHeader[30];
+
+    if(stat(path,&statInfo))
+        perror("error");
+    blobHeader = (char*)malloc(sizeof(char)*(5+statInfo.st_size/10+1));
+    sprintf(blobHeader,"blob %d%c\n",statInfo.st_size,'\0');
     SHA256_Init(&ctx);
+    SHA256_Update(&ctx,blobHeader,szieof(blobHeader));
 
     while((bytesRead=fread(buffer,1,BUFSIZE, fp))){
             SHA256_Update(&ctx,buffer,bytesRead);
