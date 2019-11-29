@@ -72,7 +72,7 @@ void* hashFile(char *path){
 
     if(stat(path,&statInfo))
         perror("error");
-    blobHeader = (char*)malloc(sizeof(char)*(5+statInfo.st_size/10+1));
+    blobHeader = (char*)malloc(sizeof(char)*(7+statInfo.st_size/10+1));
     sprintf(blobHeader,"blob %d%c\n",statInfo.st_size,'\0');
     SHA256_Init(&ctx);
     SHA256_Update(&ctx,blobHeader,szieof(blobHeader));

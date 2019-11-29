@@ -10,13 +10,13 @@
 
 #include "ds.h"
 
-// void create_dir(){
+/* void create_dir(){
 //     #ifdef __linux__
 //         mkdir(".vms",777);
 //     #else
 //         _mkdir(".vms");
 //     #endif
-// }
+ } */
 
 typedef struct hash_Node{
     struct hash_Node *next;
@@ -25,6 +25,27 @@ typedef struct hash_Node{
     unsigned char hash[32];
     
 }hashNode;
+
+struct indexForm form;
+
+void insertIndex(){
+
+}
+void updateIndex(unsigned char* Treehash,hashNode* objects){
+    struct indexContent* content = form.body;
+    struct indexContent* newContent = 
+    (struct indexContent*)malloc(sizeof(struct indexContent)* );
+    int offset;
+    hashNode* temp;
+    temp = objects;
+    while(temp!=NULL){
+        offset = findIndex(content, 0, form.head.contentNum-1, temp->name);
+        if(offset == -1)
+        memcpy(content[offset].wdir,Treehash,32);
+        memcpy(content[offset].stage,Treehash,32);
+        temp = temp->next;
+    }
+}
 
 hashNode insertHashNode(hashNode root,const char* hash,char* name,int size){
     if(hash == NULL)
@@ -66,13 +87,13 @@ void createTreeObject(char* contents,char* objectName){
     object = gzopen(objectName,"wb");
     if(object==NULL)
         perror("gzwrite error");
+
     if(gzwrite(object,contents,sizeof(contents)) < 0)
         perror("gzwrite error");
 
     gzclose(object);
     fprintf(stderr,"Tree object CREATED -> %s",objectName);
 }
-
 unsigned char* addFile(FILE* fp,const char* fileName,Node* root){
     Node* s;
     struct fileInfo* index;
@@ -95,17 +116,13 @@ unsigned char* addFile(FILE* fp,const char* fileName,Node* root){
         if(checkFile(path)){  //Object is Existed
                 fprintf(stderr,"%s\nObject Existed\n",path+19);
                 return hash;
-        }else{
-            /* object is not exist */
         }
     }else{
         mkdir(dir, "S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH");
     }
-    createBlobObject(fileName,path);
-
+    createBlobObject(fileName, path);
     memset(&fi,0,sizeof(struct fileInfo));
     strcpy(fi.name,path);
-    /* zlib hrer*/
     // s = search(root,path);
     // if(s != NULL){
     //     index = s->d;
@@ -117,14 +134,41 @@ unsigned char* addFile(FILE* fp,const char* fileName,Node* root){
 
     return hash;
 }
-int addTree(const char* dirName){
-    DIR* dir = opendir(dirName);
-    struct dirent* ent;
-    while((ent = readdir(dir)) != NULL){
-        
-    }
-}
+unsigned char* addTree(hashNode* hashs, int objNum){
+    hashNode* temp;
+    temp = hashs;
+    unsigned char* treeHash;
+    char* treeobj = (char*)malloc((sizeof(char))*objNum<<8); //* 32
+    char dir[100]; //Just apporxiamted
+    char path[100];
 
+    sprintf(treeobj,"Tree %d%c\nblob ",objNum,'\0');
+
+    while(temp!=NULL){
+        sprintf(treeobj,"\n");
+        snprintf(treeobj,32,"blob %s\0 %s",temp->name,temp->hash);
+        temp = temp->next;
+    }
+    treeHash = hashchars(treeobj);
+
+    sprintf(dir,"./.VMS/objects/%02x%02x",treeHash[0],treeHash[1]);
+    sprintf(path,"%s/",dir);
+    for(int i=2; i < 32; i++){                // Hash to char*
+            sprintf(path, "%02x",treeHash[i]); 
+    }
+    if(checkfile(dir)){     //first two char of hash dir is exixted
+        fprintf(stderr,"%s -> ");
+        if(checkFile(path)){  //Object is Existed
+                fprintf(stderr,"%s\nObject Existed\n",path+19);
+                return treeHash;
+        }
+    }else{
+        mkdir(dir, "S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH");
+    }
+    createTreeObject(treeobj,dir);
+    updateIndex(treeHash,hashs);
+    return hashToString(treeHash);
+}
 char* add(const char* dirName){
     DIR* dir = opendir(dirName);
     size_t path_len = strlen(dirName);
@@ -156,6 +200,7 @@ char* add(const char* dirName){
                 free(buf);
             }
             size+=statbuf.st_size;
+            // statbuf.st_mtimespec;
             objNum++;
         }
         closedir(dir);
@@ -163,62 +208,12 @@ char* add(const char* dirName){
     else {
         fprintf(stderr,"no such object(s) in your repository\n");
     }
-    /*whata actual do in add TREE*/
-    hashNode* temp;
-    temp = hashs;
-    char* treeobj = (char*)malloc(sizeof(char)*objNum<<5 + ); //* 32
-    sprintf(treeobj,"Tree %d%c\nblob%c",'\0',objNum,'\0');
-    while(temp!=NULL){
-        sprintf(treeobj,"\n");
-        snprintf(treeobj,32,"%s",temp->hash);
-        temp = temp->next;
-    }
-    treeHash = hashToString(hashStrings(treeobj));
-
+    treeHash = addTree(hashs, objNum);
     /*free somethings here*/
     free(dirName);
+
     return treeHash;
 }
-
-
-void addDir(Node* n,const char* path,SHA256_CTX* ctx){
-    DIR *dir = opendir(path);
-    FILE* componet;
-
-    struct fileInfo fi;
-    struct dirent ent;
-
-    if(isfile(path)){
-        closedir(dir);
-        if(n == NULL){
-            n = newNode(path);
-        }else{
-            n->right = newNode(path);
-        }
-        SHA256_Update(hashFile(path),ctx);
-        return;
-    }
-    while((ent = readdir(dir) != NULL)){
-        if((strcmp(ent->d_name,".") != 0) || (strcmp(ent->d_name,"..") !=0 
-        && (strcmp(ent->d_name,".VMS") !=0){
-            SHA256_Update(addDir(n,realpath(ent->d_name),ctx),ctx);
-        }
-    }
-    return ctx;
-
-    while((ent = readdir(dir)) != NULL){
-        if(isFile(ent)){
-            componet = fopen(ent->d_name,"rb");
-            strcpy(fi.name,ent->d_name);
-            fi.size =checkFileSize(componet);
-            memcpy(fi.wdir,hashFile(componet));
-            
-            fprintf("")
-        }
-
-    }
-}
-
 Node* getFromIndex(){
     struct fileInfo** fi;
     int fileSize;
@@ -240,7 +235,24 @@ Node* getFromIndex(){
     fclose(index);
     return root;
 }
-
+void loadIndex(){
+    FILE* index = fopen("./.VMS/index","rb");
+    int fileSize;
+    struct indexHead head;
+    struct indexContent* content;
+    fileSize = checkFileSize(index);
+    fread(&head, sizeof(struct indexHead),1,index);
+    if(head.indexSize != fileSize){
+        perror(".VMS/index failed : recover");
+    }
+    content =(struct indexContent*)malloc(sizeof(struct indexContent)* head.contentNum);
+    for(int i=0;i<head.contentNum;i++){
+        fread(content+i, sizeof(struct indexContent), 1, index);
+    }
+    form.head = head;
+    form.body = content;
+    fclose(index);
+}
 void addCmd(int argc,char* argv[]){
     struct dirent* ent;
     unsigned int fileSize;
@@ -266,7 +278,6 @@ void addCmd(int argc,char* argv[]){
             if(isFile(argv[i]){
     
             }else{
-                Nod
                 addDir(fp,argv[i]);
             }
         }
@@ -274,8 +285,6 @@ void addCmd(int argc,char* argv[]){
     closedir(dir);
     fclose(fp);
 }
-
-
 
 int main(int argc,char* argv[]){
     add(argc,argv);
