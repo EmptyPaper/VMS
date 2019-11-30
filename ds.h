@@ -13,26 +13,20 @@ void *hashStrings(void **string);
 void *hashchars(void* string);
 char* hashToString(unsigned char* hash);
 
-
-typedef struct node{
-    Node* left, right;
-    void* d;
-}Node;
-
-/* return dest offset of content*/
-int findIndex(struct indexContent* content, int l, int r, char* key){
-    int mid = 1+(r+l)/2;
-    int out = -1;
-    if(r<=l){
-        if(!strcmp(content[mid].name, key))
-            out = mid;
-        else if(strcmp(content[mid].name, key) < 0)
-            out = findIndex(content, mid+1, r,key);
-        else if(strcmp(content[mid].name, key) > 0)
-            out = findIndex(content, l, mid-1, key);
-    }
-    return out;
-}
+// /* return dest offset of content*/
+// int findIndex(struct indexContent* content, int l, int r, char* key){
+//     int mid = 1+(r+l)/2;
+//     int out = -1;
+//     if(r<=l){
+//         if(!strcmp(content[mid].name, key))
+//             out = mid;
+//         else if(strcmp(content[mid].name, key) < 0)
+//             out = findIndex(content, mid+1, r,key);
+//         else if(strcmp(content[mid].name, key) > 0)
+//             out = findIndex(content, l, mid-1, key);
+//     }
+//     return out;
+// }
 
 void DieWithError(char * errorMessage) {
     perror(errorMessage);
@@ -43,7 +37,7 @@ unsigned int checkFile(const char* path){
         return 1;
     }
     else{
-        DieWithError("VMS is not initiated");
+        fprintf(stderr,"\n%s is not exisist\n", path);
     }
     return 0;
 }
@@ -61,7 +55,7 @@ int isFile(const char* path){
     stat(path, &path_stat);
 
     return S_ISREG(path_stat.st_mode);
-// }
+}
 // // A utility function to create a new BST node 
 // Node *newNode(void* item) 
 // { 
