@@ -10,7 +10,6 @@
 
 #include "ds.h"
 #include "index.h"
-
 /* void create_dir(){
 //     #ifdef __linux__
 //         mkdir(".vms",777);
@@ -74,10 +73,17 @@ void createBlobObject(char* fileName,char* objectName){
     object = gzopen(objectName,"wb");
     if(object == NULL)
         perror("zlib error");
-    while((readByte = fread(buffer,1,256,fp) > 0)){
-        if(gzwrite(object,buffer,256) < 0)
+    while(!feof(fp)){
+        memset(buffer,0,256);
+        readByte = fread(buffer,1,256,fp);
+        if(gzwrite(object,buffer,readByte) < 0)
             perror("gzwrite error");
     }
+    // while((readByte = fread(buffer,1,256,fp)) > 0){
+    //     if(gzwrite(object,buffer,readByte) == 0)
+    //         perror("gzwrite error");
+    //     fprintf(stderr,"%s",buffer);
+    // }
     gzclose(object);
     fclose(fp);
     fprintf(stderr,"\n-> %s for \n",fileName);
@@ -151,7 +157,7 @@ contents* add(char* dirName, contents* hashs){
                         content = malloc(sizeof(indexContent));
                         content->conflict = 0;
                         strcpy(content->name,buf);
-                        memcpy(content->hash,addFile(buf),32);
+                        memcpy(content->hash,addFile(buf),64);
                         content->size = statbuf.st_size;
                         hashs = indexInsert(hashs, content);
                     }
@@ -165,7 +171,14 @@ contents* add(char* dirName, contents* hashs){
         closedir(dir);
     }
     else {
-        fprintf(stderr,"no such object(s) in your repository\n");
+        if (!stat(dirName, &statbuf)){
+            content = malloc(sizeof(indexContent));
+            content->conflict = 0;
+            strcpy(content->name,dirName);
+            memcpy(content->hash,addFile(dirName),64);
+            content->size = statbuf.st_size;
+            hashs = indexInsert(hashs, content);
+        }
     }
     // treeHash = addTree(hashs, objNum);
     /*free somethings here*/
@@ -201,16 +214,22 @@ contents* loadIndex(contents* hashs){
         DieWithError("gzopen error");
     while(gzread(index,content,sizeof(indexContent)) > 0){
         hashs = indexInsert(hashs,content);
+        fprintf(stderr,"hashs -> %s",content->name);
     }
+    gzclose(index);
     return hashs;
 }
 
 void saveIndex(contents* hashs,gzFile index){
     if(hashs != NULL){
         saveIndex(hashs->left,index);
-        if(gzwrite(index,hashs->content,sizeof(indexContent) == 0)){
+        if((gzwrite(index, hashs->content,sizeof(indexContent))) == 0){
             DieWithError("gzwrite error");
         }
+        else{
+            fprintf(stderr,"\nsaving !! -> %s", hashs->content->name);
+        }
+        saveIndex(hashs->right,index);
     }
 }
 
@@ -220,6 +239,7 @@ void addCmd(int argc,char* argv[]){
     unsigned char zero = 0x0;
     contents* hashs = NULL;
     gzFile index;
+
     if((index = gzopen("./.VMS/index", "wb")) == NULL)
         DieWithError("gzopen error");
     
@@ -237,6 +257,8 @@ void addCmd(int argc,char* argv[]){
     }else{
         DieWithError("NO initiation");
     }
+    gzclose(index);
+
 }
 
 int main(int argc,char* argv[]){
