@@ -28,20 +28,6 @@ char* hashToString(unsigned char* hash);
 //     return out;
 // }
 
-void DieWithError(char * errorMessage) {
-    perror(errorMessage);
-    exit(1);
-}
-unsigned int checkFile(const char* path){
-    if(access(path, F_OK) != -1){
-        return 1;
-    }
-    else{
-        fprintf(stderr,"\n%s is not exisist\n", path);
-    }
-    return 0;
-}
-
 unsigned int checkFileSize(FILE* fp){
     unsigned int fileSize;
     fseek(fp, 0, SEEK_END);
@@ -50,12 +36,12 @@ unsigned int checkFileSize(FILE* fp){
     return fileSize;
 }
 
-int isFile(const char* path){
-    struct stat path_stat;
-    stat(path, &path_stat);
+// int isFile(const char* path){
+//     struct stat path_stat;
+//     stat(path, &path_stat);
 
-    return S_ISREG(path_stat.st_mode);
-}
+//     return S_ISREG(path_stat.st_mode);
+// }
 // // A utility function to create a new BST node 
 // Node *newNode(void* item) 
 // { 

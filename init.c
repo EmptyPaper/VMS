@@ -32,9 +32,8 @@ int init(){
     
     mkdir("./.VMS", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     mkdir("./.VMS/vetors", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    mkdir("./.VMS/codes", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     mkdir("./.VMS/objects", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    
+    mkdir("./.VMS/log", S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     fp = fopen("./HEAD","w");
     if(fp == NULL){

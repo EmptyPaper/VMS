@@ -3,28 +3,13 @@
 #include <string.h>
 #include <dirent.h>
 #include "ds.h"
+#include "index.h"
 
 unsigned int checkRepository();
-
-void checkIndex(){
-    FILE* INDEX;
-    if(access("./.VMS/index", F_OK) != -1){
-        struct fileInfo* info;
-        INDEX = fopen();
-    }
-    else{
-        DieWithError("Empty Index");
-    }
-}
-
-void DieWithError(char*);
-
-void* hashSha256(void * data);
 
 void vector(){
 
 }
-
 void hashChain(){
     FILE *HEAD;
     char buffer[256];
@@ -94,16 +79,36 @@ unsigned char* addTree(hashNode* hashs, int objNum){
     return hashToString(treeHash);
 }
 void createTreeObject(char* contents,char* objectName){
-    gzFile* object;
+    gzFile object;
     int readByte;
-
     object = gzopen(objectName,"wb");
     if(object==NULL)
         perror("gzwrite error");
 
     if(gzwrite(object,contents,sizeof(contents)) < 0)
         perror("gzwrite error");
-
     gzclose(object);
     fprintf(stderr,"Tree object CREATED -> %s",objectName);
+}
+
+void commit(contents* hashs){
+    contents* head;
+    char* temp = head->content->name;
+    
+}
+
+void commitCmd(int argc,char* argv[]){
+    /* if index file is NOT exist */
+    contents* hashs;
+    if(access("./.VMS", F_OK) == -1){
+        fprintf(stderr,".VMS is NOT EXIST\n");
+        fprintf(stderr,"please init VMS first\n");
+        return;
+    } else if(access("./.VMS/index", F_OK) == -1){ 
+        fprintf(stderr,"INDEX is NOT EXIST\n");
+        fprintf(stderr,"please INDEXING VMS first");
+        return;
+    } 
+    hashs = loadIndex(hashs);
+    commit(hashs);
 }

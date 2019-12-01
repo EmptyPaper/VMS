@@ -3,11 +3,7 @@
 #include <string.h>
 #include <openssl/sha.h>
 #include <sys/stat.h>
-#define BUFSIZE 1024
-void* hashFile(char *path);
-void *hashStrings(void **string);
-void *hashchars(void* string);
-
+#include "hash.h"
 
 char* hashToString(unsigned char* hash){
     char* string = malloc(sizeof(char)*64);

@@ -8,8 +8,9 @@
 
 #include <openssl/sha.h>
 
-#include "ds.h"
+
 #include "index.h"
+#include "hash.h"
 /* void create_dir(){
 //     #ifdef __linux__
 //         mkdir(".vms",777);
@@ -86,8 +87,8 @@ void createBlobObject(char* fileName,char* objectName){
     // }
     gzclose(object);
     fclose(fp);
-    fprintf(stderr,"\n-> %s for \n",fileName);
-    fprintf(stderr,"\nobject CREATED -> %s",objectName);
+    fprintf(stderr,"\n-> %s for\n",fileName);
+    fprintf(stderr,"object CREATED -> %s\n",objectName);
 }
 unsigned char* addFile(char* fileName){
     unsigned char *hash;
@@ -103,9 +104,9 @@ unsigned char* addFile(char* fileName){
     for(int i=2; i < 32; i++){                // Hash to char*
             sprintf(path+strlen(path), "%02x",hash[i]); 
     }
-    if(checkFile(dir)){     //first two char of hash dir is exixted
+    if(access(dir, F_OK) != -1 ){     //first two char of hash dir is exixted
         // fprintf(stderr,"%s -> ",path);
-        if(checkFile(path)){  //Object is Existed
+        if(access(path, F_OK) != -1){  //Object is Existed
                 // fprintf(stderr,"%s\nObject Existed\n",path+19);
                 return hash;
         }
@@ -115,7 +116,6 @@ unsigned char* addFile(char* fileName){
     fprintf(stderr,"object name : %s", path);
     createBlobObject(fileName, path);
 
-
     // s = search(root,path);
     // if(s != NULL){
     //     index = s->d;
@@ -124,11 +124,10 @@ unsigned char* addFile(char* fileName){
     //     memcpy(fi.size,index->size,sizeof(int));
     // }
     // fwrite(&fi,sizeof(struct fileInfo),1,fp);
-
     return hash;
 }
 
-contents* add(char* dirName, contents* hashs){
+void add(char* dirName, contents** hashs){
     DIR* dir = opendir(dirName);
     size_t path_len = strlen(dirName);
     indexContent* content;
@@ -152,14 +151,14 @@ contents* add(char* dirName, contents* hashs){
                 snprintf(buf, len, "%s/%s", dirName, path->d_name);
                 if (!stat(buf, &statbuf)){
                     if (S_ISDIR(statbuf.st_mode))
-                        hashs = add(buf,hashs);
+                        add(buf,hashs);
                     else{
                         content = malloc(sizeof(indexContent));
                         content->conflict = 0;
                         strcpy(content->name,buf);
-                        memcpy(content->hash,addFile(buf),64);
+                        memcpy(content->hash,addFile(buf),32);
                         content->size = statbuf.st_size;
-                        hashs = indexInsert(hashs, content);
+                        indexInsert(hashs, content);
                     }
                 }
                 free(buf);
@@ -177,14 +176,12 @@ contents* add(char* dirName, contents* hashs){
             strcpy(content->name,dirName);
             memcpy(content->hash,addFile(dirName),64);
             content->size = statbuf.st_size;
-            hashs = indexInsert(hashs, content);
+            indexInsert(hashs, content);
         }
     }
     // treeHash = addTree(hashs, objNum);
     /*free somethings here*/
     // free(dirName);
-
-    return hashs;
 }
 // Node* getFromIndex(){
 //     struct fileInfo** fi;
@@ -207,57 +204,28 @@ contents* add(char* dirName, contents* hashs){
 //     fclose(index);
 //     return root;
 // }
-contents* loadIndex(contents* hashs){
-    gzFile index;
-    indexContent* content = malloc(sizeof(indexContent));
-    if((index = gzopen("./.VMS/index", "rb")) == NULL)
-        DieWithError("gzopen error");
-    while(gzread(index,content,sizeof(indexContent)) > 0){
-        hashs = indexInsert(hashs,content);
-        fprintf(stderr,"hashs -> %s",content->name);
-    }
-    gzclose(index);
-    return hashs;
-}
-
-void saveIndex(contents* hashs,gzFile index){
-    if(hashs != NULL){
-        saveIndex(hashs->left,index);
-        if((gzwrite(index, hashs->content,sizeof(indexContent))) == 0){
-            DieWithError("gzwrite error");
-        }
-        else{
-            fprintf(stderr,"\nsaving !! -> %s", hashs->content->name);
-        }
-        saveIndex(hashs->right,index);
-    }
-}
 
 void addCmd(int argc,char* argv[]){
     struct dirent* ent;
     unsigned int fileSize;
     unsigned char zero = 0x0;
-    contents* hashs = NULL;
-    gzFile index;
+    contents** hashs = (contents**)malloc(sizeof(contents*));
+    *hashs = NULL;
 
-    if((index = gzopen("./.VMS/index", "wb")) == NULL)
-        DieWithError("gzopen error");
-    
-    if(checkFile("./.VMS")){
+    if(access("./.VMS",F_OK) != -1){
+        if(access("./.VMS/index",F_OK) != -1){
+            loadIndex(hashs);
+        }
         for(int i=1;i<argc;i++){
-            hashs = add(argv[i],hashs);
+            add(argv[i],hashs);
         }
-        fprintf(stderr,"\n add is done \n");
-        if(checkFile("./.VMS/index")){
-            hashs = loadIndex(hashs);
-        }
-        fprintf(stderr,"\n load is done \n");
-        saveIndex(hashs,index);
-        fprintf(stderr,"\n save is done \n");
+        gzFile index;
+        index = gzopen("./.VMS/index","wb");
+        saveIndex(*hashs,&index);
+        gzclose(index);
     }else{
-        DieWithError("NO initiation");
+        perror("NO initiation");
     }
-    gzclose(index);
 
 }
 
