@@ -215,10 +215,12 @@ void addCmd(int argc,char* argv[]){
     if(access("./.VMS",F_OK) != -1){
         if(access("./.VMS/index",F_OK) != -1){
             loadIndex(hashs);
+            fprintf(stderr,"%d %d",(*hashs)->right,(*hashs)->left);
         }
         for(int i=1;i<argc;i++){
             add(argv[i],hashs);
         }
+        fprintf(stderr,"%d %d",(*hashs)->left,(*hashs)->right);
         gzFile index;
         index = gzopen("./.VMS/index","wb");
         saveIndex(*hashs,&index);

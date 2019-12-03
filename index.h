@@ -24,12 +24,21 @@ typedef struct _contents{
     struct _contents* parent;
     indexContent* content;
 }contents;
+struct container{
+    char rootDir[255];
+    contents* hashs;
+    struct container* next;
+};
 
 contents* newIndexContent(indexContent* content);
 // contents* indexSearch(contents* root,char* key);
 void indexInsert(contents** root,indexContent* content);
 void loadIndex(contents** hashs);
 void saveIndex(contents* hashs,gzFile* index);
+void push(struct container **contain, contents* hashs);
+contents* pop(struct container **contain);
+
+
 
 
 
