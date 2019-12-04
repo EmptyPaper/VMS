@@ -19,49 +19,6 @@
 //     #endif
  } */
 
-// typedef struct hash_Node{
-//     struct hash_Node *right,left;
-//     char name[__DARWIN_MAXNAMLEN];
-//     int size;
-//     unsigned char hash[32];
-    
-// }hashNode;
-
-// struct indexForm form;
-
-// void updateIndex(unsigned char* Treehash,hashNode* objects){
-//     struct indexContent* content = form.body;
-//     struct indexContent* newContent = 
-//     (struct indexContent*)malloc(sizeof(struct indexContent)* );
-//     int offset;
-//     hashNode* temp;
-//     temp = objects;
-//     while(temp!=NULL){
-//         offset = findIndex(content, 0, form.head.contentNum-1, temp->name);
-//         if(offset == -1)
-//         memcpy(content[offset].wdir,Treehash,32);
-//         memcpy(content[offset].stage,Treehash,32);
-//         temp = temp->next;
-//     }
-// }
-
-// hashNode* insertHashNode(hashNode* root,const char* hash,char* name,int size){
-//     if(hash == NULL)
-//         return NULL;
-//     if(root == NULL){
-//         root = (hashNode*)malloc(sizeof(hashNode));
-//         memcpy(root->hash,hash,32);
-//         strcpy(root->name, name);
-//         root->size = size;
-//         root->right = root->left = NULL;
-//         return root;
-//     }
-//     else if(strcmp(root->name, name) < 0)
-//         root->left = insertHashNode(root->left, hash, name, size);
-//     else if(strcmp(root->name, name) > 0)
-//         root->right = insertHashNode(root->right, hash, name, size);
-
-// }
 
 void createBlobObject(char* fileName,char* objectName){
     FILE* fp;
@@ -127,7 +84,7 @@ unsigned char* addFile(char* fileName){
     return hash;
 }
 
-void add(char* dirName, contents** hashs){
+void add(char* dirName){
     DIR* dir = opendir(dirName);
     size_t path_len = strlen(dirName);
     indexContent* content;
@@ -138,7 +95,6 @@ void add(char* dirName, contents** hashs){
     int objNum=0;
     int size = 0;
     char* treeHash;
-
     if (dir){
         while ((path=readdir(dir)) != NULL){
             if (!strcmp(path->d_name, ".") || !strcmp(path->d_name, "..") 
@@ -151,14 +107,15 @@ void add(char* dirName, contents** hashs){
                 snprintf(buf, len, "%s/%s", dirName, path->d_name);
                 if (!stat(buf, &statbuf)){
                     if (S_ISDIR(statbuf.st_mode))
-                        add(buf,hashs);
+                        add(buf);
                     else{
                         content = malloc(sizeof(indexContent));
                         content->conflict = 0;
                         strcpy(content->name,buf);
                         memcpy(content->hash,addFile(buf),32);
+                        strcpy(content->type, "blob");
                         content->size = statbuf.st_size;
-                        indexInsert(hashs, content);
+                        red_black_insert(content);
                     }
                 }
                 free(buf);
@@ -176,54 +133,31 @@ void add(char* dirName, contents** hashs){
             strcpy(content->name,dirName);
             memcpy(content->hash,addFile(dirName),64);
             content->size = statbuf.st_size;
-            indexInsert(hashs, content);
+            red_black_insert(content);
         }
     }
     // treeHash = addTree(hashs, objNum);
     /*free somethings here*/
     // free(dirName);
 }
-// Node* getFromIndex(){
-//     struct fileInfo** fi;
-//     int fileSize;
-//     int count;
-//     Node* root = NULL;
-//     FILE* index = fopen("./.VMS/index","rb");
-
-//     fileSize = checkFileSize(index);
-//     count = fileSize/sizeof(struct fileInfo);
-
-//     fi = (struct fileInfo**)malloc(sizeof(struct fileInfo*)*count);
-//     for(int i = 0; i < count;i++){
-//         fi[i] = malloc(sizeof(struct fileInfo));
-//     }
-//     for(int i = 0; i < count; i++){
-//         fread(fi[i],sizeof(struct fileInfo),index);
-//         insert(root,fi[i]);
-//     }
-//     fclose(index);
-//     return root;
-// }
-
 void addCmd(int argc,char* argv[]){
     struct dirent* ent;
     unsigned int fileSize;
     unsigned char zero = 0x0;
-    contents** hashs = (contents**)malloc(sizeof(contents*));
-    *hashs = NULL;
+    NILL = malloc(sizeof(contents));
+    NILL->color=BLACK;
+    ROOT = NILL;
 
     if(access("./.VMS",F_OK) != -1){
         if(access("./.VMS/index",F_OK) != -1){
-            loadIndex(hashs);
-            fprintf(stderr,"%d %d",(*hashs)->right,(*hashs)->left);
+            loadIndex();
         }
         for(int i=1;i<argc;i++){
-            add(argv[i],hashs);
+            add(argv[i]);
         }
-        fprintf(stderr,"%d %d",(*hashs)->left,(*hashs)->right);
         gzFile index;
         index = gzopen("./.VMS/index","wb");
-        saveIndex(*hashs,&index);
+        saveIndex(ROOT,&index);
         gzclose(index);
     }else{
         perror("NO initiation");

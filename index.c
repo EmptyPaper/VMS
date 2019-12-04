@@ -10,217 +10,450 @@ void InsertRepairTree(contents* a);
 void InsertCase4Step2(contents* n);
 
 
-contents* GetParent(contents* n) {
-  // Note that parent is set to null for the root contents.
-  return n == NULL ? NULL : n->parent;
+/* Global, since all function will access them */
+
+
+
+/* Print tree keys by inorder tree walk */
+
+void tree_print(contents *x){
+	if(x != NILL){
+		tree_print(x->left);
+		printf("%s\t", x->content->name);
+		tree_print(x->right);
+	}
 }
 
-contents* GetGrandParent(contents* n) {
-  // Note that it will return NULL if this is root or child of root
-  return GetParent(GetParent(n));
-}
+// contents *tree_search(indexContent* key){
+// 	contents *x;
 
-contents* GetSibling(contents* n) {
-  contents* p = GetParent(n);
+// 	x = ROOT;
+// 	while(x != NILL && x->key != key){
+// 		if(key < x->key){
+// 			x = x->left;
+// 		}
+// 		else{
+// 			x = x->right;
+// 		}
+// 	}
 
-  // No parent means no sibling.
-  if (p == NULL) {
-    return NULL;
-  }
-
-  if (n == p->left) {
-    return p->right;
-  } else {
-    return p->left;
-  }
-}
-
-contents* GetUncle(contents* n) {
-  contents* p = GetParent(n);
-
-  // No parent means no uncle
-  return GetSibling(p);
-}
-
-void RotateLeft(contents* n) {
-  contents* nnew = n->right;
-  contents* p = GetParent(n);
-  assert(nnew != NULL);  // Since the leaves of a 'R'-'B' tree are empty,
-                            // they cannot become internal contentss.
-  n->right = nnew->left;
-  nnew->left = n;
-  n->parent = nnew;
-  // Handle other child/parent pointers.
-  if (n->right != NULL) {
-    n->right->parent = n;
-  }
-
-  // Initially n could be the root.
-  if (p != NULL) {
-    if (n == p->left) {
-      p->left = nnew;
-    } else if (n == p->right) {
-      p->right = nnew;
-    }
-  }
-  nnew->parent = p;
-}
-
-void RotateRight(contents* n) {
-  contents* nnew = n->left;
-  contents* p = GetParent(n);
-  assert(nnew != NULL);  // Since the leaves of a 'R'-'B' tree are empty,
-                            // they cannot become internal contentss.
-
-  n->left = nnew->right;
-  nnew->right = n;
-  n->parent = nnew;
-
-  // Handle other child/parent pointers.
-  if (n->left != NULL) {
-    n->left->parent = n;
-  }
-
-  // Initially n could be the root.
-  if (p != NULL) {
-    if (n == p->left) {
-      p->left = nnew;
-    } else if (n == p->right) {
-      p->right = nnew;
-    }
-  }
-  nnew->parent = p;
-}
-void InsertCase1(contents* n) {
-  if (GetParent(n) == NULL) {
-    n->color = 'B';
-  }
-}
-void InsertCase2(contents* n) {
-  // Do nothing since tree is still valid.
-  return;
-}
-void InsertCase3(contents* n) {
-  n->parent->color = 'B';
-  GetUncle(n)->color = 'B';
-  GetGrandParent(n)->color = 'R';
-  InsertRepairTree(GetGrandParent(n));
-}
-
-void InsertCase4(contents* n) {
-  contents* p = GetParent(n);
-  contents* g = GetGrandParent(n);
-  if (n == p->right && p == g->left) {
-    RotateLeft(p);
-    n = n->left;
-  } else if (n == p->left && p == g->right) {
-    RotateRight(p);
-    n = n->right;
-  }
-  InsertCase4Step2(n);
-}
-
-void InsertCase4Step2(contents* n) {
-  contents* p = GetParent(n);
-  contents* g = GetGrandParent(n);
-
-  if (n == p->left) {
-    RotateRight(g);
-  } else {
-    RotateLeft(g);
-  }
-  p->color = 'B';
-  g->color = 'R';
-}
-
-void InsertRepairTree(contents* n) {
-  if (GetParent(n) == NULL) {
-    InsertCase1(n);
-  } else if (GetParent(n)->color == 'B') {
-    InsertCase2(n);
-  } else if (GetUncle(n) != NULL && GetUncle(n)->color == 'R') {
-    InsertCase3(n);
-  } else {
-    InsertCase4(n);
-  }
-}
-
-
-
-
-// contents* newIndexContent(indexContent* content){
-//     contents *temp = (contents*)malloc(sizeof(contents));
-//     temp->content = content;
-//     memcpy(temp->content,content,sizeof(indexContent));
-//     temp->left = temp->right = NULL;
-//     return temp;
+// 	return x;
 // }
-// contents* newIndexContent(indexContent* content){
-//     contents* temp = (contents*)malloc(sizeof(contents)); 
-//     temp->content = content; 
-//     temp->next = NULL; 
-//     return temp; 
-// }
-// indexContent* peek(contents** root) { 
-//     return (*root)->content; 
-// } 
-// void pop(contents** root) 
-// { 
-//     contents* temp = *root; 
-//     (*root) = (*root)->next; 
-//     free(temp); 
-// } 
-// contents* indexSearch(contents* root,char* key){
-//     if(root == NULL || (strcmp(root->content->name, key) ==0))
-//         return root;
-//     if(strcmp(root->content->name,key) <0)
-//         return indexSearch(root->right, key);
-//     return indexSearch(root->left, key);
-// }
-// contents *indexInsert(contents* root,indexContent* content){
-//     if(root == NULL)
-//         return newIndexContent(content);
-//     if(strcmp(content->name, root->content->name) < 0)
-//         root->left = indexInsert(root->left, content);
-//     else if(strcmp(content->name, root->content->name) > 0)
-//         root->right = indexInsert(root->right, content);
-//     return root;
-// // }
-// void indexInsert(contents** root,indexContent* content){
-//     contents* start = (*root); 
-//     // Create new Node 
-//     contents* temp = newIndexContent(content); 
-//     if(start == NULL){
-//         *root = temp;
-//         return;
-//     }
-//     char* rootName = (*root)->content->name;
-//     char* newName = content->name;
-//     if (strcmp(rootName, newName) > 0) {
-//         // Insert New Node before head 
-//         temp->next = *root; 
-//         (*root) = temp;
-//     } 
-//     else { 
-//         // Traverse the list and find a 
-//         // position to insert new node 
-//         while ((start->next != NULL) && 
-//                (strcmp(start->next->content->name, newName) < 0)){ 
-//             start = start->next; 
-//         }
-//         if(start->next != NULL && !strcmp(start->next->content->name, newName))
-//             return;
-//         // Either at the ends of the list 
-//         // or at requi'R' position 
-//         temp->next = start->next; 
-//         start->next = temp; 
-//     } 
-// }
-int isEmpty(contents** head) { 
-    return (*head) == NULL; 
-} 
+
+contents *tree_minimum(contents *x){
+	while(x->left != NILL){
+		x = x->left;
+	}
+	return x;
+}
+
+/*
+ * Insertion is done by the same procedure for BST Insert. Except new node is colored
+ * RED. As it is coloured RED it may violate property 2 or 4. For this reason an
+ * auxilary procedure called red_black_insert_fixup is called to fix these violation.
+ */
+
+void red_black_insert(indexContent* content){
+	contents *z; 
+	contents *x;
+	contents *y;
+	z = malloc(sizeof(contents));
+
+	z->content = content;
+	z->color = RED;
+	z->left = NILL;
+	z->right = NILL;
+
+	x = ROOT;
+	y = NILL;
+
+    int depth = countDepth(content->name);
+    int tempDepth;
+	/* 
+	 * Go through the tree untill a leaf(NILL) is reached. y is used for keeping
+	 * track of the last non-NILL node which will be z's parent.
+	 */
+	while(x != NILL){
+		y = x;
+        tempDepth = countDepth(x->content->name);
+		if(depth > tempDepth){
+			x = x->left;
+		}
+		else if(depth < tempDepth){
+			x = x->right;
+		}
+		else{
+			if(strcmp(x->content->name,z->content->name) > 0)
+				x = x->left;
+			else if(strcmp(x->content->name,z->content->name) < 0)
+				x = x->right;
+			else if(!strcmp(x->content->name,z->content->name)){
+				free(x->content);
+				x->content = z->content;
+				return;
+			}
+		}
+	}
+	if(y == NILL){
+		ROOT = z;
+	}
+	if(depth > tempDepth){
+		y->left = z;
+	}
+	else if(depth < tempDepth){
+		y->right = z;
+	}
+	else{
+		if(strcmp(y->content->name,z->content->name) > 0)
+			y->left = z;
+		else if(strcmp(y->content->name,z->content->name) < 0)
+			y->right = z;
+	}
+	z->parent = y;
+
+	red_black_insert_fixup(z);
+}
+
+/*
+ * Here is the psudocode for fixing violations.
+ * 
+ * while (z's parent is RED)
+ *		if(z's parent is z's grand parent's left child) then
+ *			if(z's right uncle or grand parent's right child is RED) then
+ *				make z's parent and uncle BLACK
+ *				make z's grand parent RED
+ *				make z's grand parent new z as it may violate property 2 & 4
+ *				(so while loop will contineue)
+ *			
+ *			else(z's right uncle is not RED)
+ *				if(z is z's parents right child) then
+ *					make z's parent z
+ *					left rotate z
+ *				make z's parent's color BLACK
+ *				make z's grand parent's color RED
+ *				right rotate z's grand parent
+ *				( while loop won't pass next iteration as no violation)
+ *
+ *		else(z's parent is z's grand parent's right child)
+ *			do exact same thing above just swap left with right and vice-varsa
+ *
+ * At this point only property 2 can be violated so make root BLACK
+ */
+
+void red_black_insert_fixup(contents *z){
+	while(z->parent->color == RED){
+
+		/* z's parent is left child of z's grand parent*/
+		if(z->parent == z->parent->parent->left){
+
+			/* z's grand parent's right child is RED */
+			if(z->parent->parent->right->color == RED){
+				z->parent->color = BLACK;
+				z->parent->parent->right->color = BLACK;
+				z->parent->parent->color = RED;
+				z = z->parent->parent;
+			}
+
+			/* z's grand parent's right child is not RED */
+			else{
+				
+				/* z is z's parent's right child */
+				if(z == z->parent->right){
+					z = z->parent;
+					left_rotate(z);
+				}
+
+				z->parent->color = BLACK;
+				z->parent->parent->color = RED;
+				right_rotate(z->parent->parent);
+			}
+		}
+
+		/* z's parent is z's grand parent's right child */
+		else{
+			
+			/* z's left uncle or z's grand parent's left child is also RED */
+			if(z->parent->parent->left->color == RED){
+				z->parent->color = BLACK;
+				z->parent->parent->left->color = BLACK;
+				z->parent->parent->color = RED;
+				z = z->parent->parent;
+			}
+
+			/* z's left uncle is not RED */
+			else{
+				/* z is z's parents left child */
+				if(z == z->parent->left){
+					z = z->parent;
+					right_rotate(z);
+				}
+
+				z->parent->color = BLACK;
+				z->parent->parent->color = RED;
+				left_rotate(z->parent->parent);
+			}
+		}
+	}
+
+	ROOT->color = BLACK;
+}
+
+/*
+ * Lets say y is x's right child. Left rotate x by making y, x's parent and x, y's
+ * left child. y's left child becomes x's right child.
+ * 
+ * 		x									y
+ *	   / \                                 / \
+ *  STA   y			----------->		  x   STC
+ *		 / \							 / \
+ *	  STB   STC						  STA   STB
+ */
+
+void left_rotate(contents *x){
+	contents *y;
+	
+	/* Make y's left child x's right child */
+	y = x->right;
+	x->right = y->left;
+	if(y->left != NILL){
+		y->left->parent = x;
+	}
+
+	/* Make x's parent y's parent and y, x's parent's child */
+	y->parent = x->parent;
+	if(y->parent == NILL){
+		ROOT = y;
+	}
+	else if(x == x->parent->left){
+		x->parent->left = y;
+	}
+	else{
+		x->parent->right = y;
+	}
+	
+	/* Make x, y's left child & y, x's parent */
+	y->left = x;
+	x->parent = y;
+}
+
+/*
+ * Lets say y is x's left child. Right rotate x by making x, y's right child and y
+ * x's parent. y's right child becomes x's left child.
+ *
+ *			|											|
+ *			x											y
+ *		   / \										   / \
+ *		  y   STA		---------------->			STB	  x
+ *		 / \											 / \
+ *	  STB   STC										  STC   STA
+ */
+
+void right_rotate(contents *x){
+	contents *y;
+
+	/* Make y's right child x's left child */
+	y = x->left;
+	x->left = y->right;
+	if(y->right != NILL){
+		y->right->parent = x;
+	}
+
+	/* Make x's parent y's parent and y, x's parent's child */
+	y->parent = x->parent;
+	if(y->parent == NILL){
+		ROOT = y;
+	}
+	else if(x == x->parent->left){
+		x->parent->left = y;	
+	}
+	else{
+		x->parent->right = y;
+	}
+
+	/* Make y, x's parent and x, y's child */
+	y->right = x;
+	x->parent = y;
+}
+
+/*
+ * Deletion is done by the same mechanism as BST deletion. If z has no child, z is
+ * removed. If z has single child, z is replaced by its child. Else z is replaced by
+ * its successor. If successor is not z's own child, successor is replaced by its
+ * own child first. then z is replaced by the successor.
+ *
+ * A pointer y is used to keep track. In first two case y is z. 3rd case y is z's
+ * successor. So in first two case y is removed. In 3rd case y is moved.
+ *
+ *Another pointer x is used to keep track of the node which replace y.
+ * 
+ * As removing or moving y can harm red-black tree properties a variable
+ * yOriginalColor is used to keep track of the original colour. If its BLACK then
+ * removing or moving y harm red-black tree properties. In that case an auxilary
+ * procedure red_black_delete_fixup(x) is called to recover this.
+ */
+
+void red_black_delete(contents *z){
+	contents *y, *x;
+	char yOriginalColor;
+
+	y = z;
+	yOriginalColor = y->color;
+
+	if(z->left == NILL){
+		x = z->right;
+		red_black_transplant(z, z->right);
+	}
+	else if(z->right == NILL){
+		x = z->left;
+		red_black_transplant(z, z->left);
+	}
+	else{
+		y = tree_minimum(z->right);
+		yOriginalColor = y->color;
+
+		x = y->right;
+
+		if(y->parent == z){
+			x->parent = y;
+		}
+		else{
+			red_black_transplant(y, y->right);
+			y->right = z->right;
+			y->right->parent = y;
+		}
+
+		red_black_transplant(z, y);
+		y->left = z->left;
+		y->left->parent = y;
+		y->color = z->color;
+	}
+
+	if(yOriginalColor == BLACK){
+		red_black_delete_fixup(x);
+	}
+}
+
+/*
+ * As y was black and removed x gains y's extra blackness.
+ * Move the extra blackness of x until
+ *		1. x becomes root. In that case just remove extra blackness
+ *		2. x becomes a RED and BLACK node. in that case just make x BLACK
+ *
+ * First check if x is x's parents left or right child. Say x is left child
+ *
+ * There are 4 cases.
+ *
+ * Case 1: x's sibling w is red. transform case 1 into case 2 by recoloring
+ * w and x's parent. Then left rotate x's parent.
+ *
+ * Case 2: x's sibling w is black, w's both children is black. Move x and w's
+ * blackness to x's parent by coloring w to RED and x's parent to BLACK.
+ * Make x's parent new x.Notice if case 2 come through case 1 x's parent becomes 
+ * RED and BLACK as it became RED in case 1. So loop will stop in next iteration.
+ *
+ * Case 3: w is black, w's left child is red and right child is black. Transform
+ * case 3 into case 4 by recoloring w and w's left child, then right rotate w.
+ *
+ * Case 4: w is black, w's right child is red. recolor w with x's parent's color.
+ * make x's parent BLACK, w's right child black. Now left rotate x's parent. Make x
+ * point to root. So loop will be stopped in next iteration.
+ *
+ * If x is right child of it's parent do exact same thing swapping left<->right
+ */
+
+void red_black_delete_fixup(contents *x){
+	contents *w;	
+
+	while(x != ROOT && x->color == BLACK){
+		
+		if(x == x->parent->left){
+			w = x->parent->right;
+
+			if(w->color == RED){
+				w->color = BLACK;
+				x->parent->color = RED;
+				left_rotate(x->parent);
+				w = x->parent->right;
+			}
+
+			if(w->left->color == BLACK && w->right->color == BLACK){
+				w->color = RED;
+				x->parent->color = BLACK;
+				x = x->parent;
+			}
+			else{
+
+				if(w->right->color == BLACK){
+					w->color = RED;
+					w->left->color = BLACK;
+					right_rotate(w);
+					w = x->parent->right;
+				}
+
+				w->color = x->parent->color;
+				x->parent->color = BLACK;
+				x->right->color = BLACK;
+				left_rotate(x->parent);
+				x = ROOT;		
+
+			}
+
+		}
+		else{
+			w = x->parent->left;
+
+			if(w->color == RED){
+				w->color = BLACK;
+				x->parent->color = BLACK;
+				right_rotate(x->parent);
+				w = x->parent->left;
+			}
+
+			if(w->left->color == BLACK && w->right->color == BLACK){
+				w->color = RED;
+				x->parent->color = BLACK;
+				x = x->parent;
+			}
+			else{
+
+				if(w->left->color == BLACK){
+					w->color = RED;
+					w->right->color = BLACK;
+					left_rotate(w);
+					w = x->parent->left;
+				}
+
+				w->color = x->parent->color;
+				x->parent->color = BLACK;
+				w->left->color = BLACK;
+				right_rotate(x->parent);
+				x = ROOT;
+
+			}
+		}
+
+	}
+
+	x->color = BLACK;
+}
+
+/* replace node u with node v */
+void red_black_transplant(contents *u, contents *v){
+	if(u->parent == NILL){
+		ROOT = v;
+	}
+	else if(u == u->parent->left){
+		u->parent->left = v;
+	}
+	else{
+		u->parent->right = v;
+	}
+
+	v->parent = u->parent;
+}
+
 // Driver code 
-void loadIndex(contents** hashs){
+void loadIndex(){
     int readByte=0;
     gzFile index;
     char buf[256];
@@ -231,34 +464,19 @@ void loadIndex(contents** hashs){
     while(!gzeof(index)){
         content = malloc(sizeof(indexContent));
         if((readByte = gzread(index, content,sizeof(indexContent))) > 0){
-            // fprintf(stderr,"load data  -> %s, %d\n",content->name,readByte);
-            // content->name[readByte-] ='\0';
-            indexInsert(hashs,content);
+             fprintf(stderr,"load data  -> %s, %d\n",content->name,readByte);
+            red_black_insert(content);
         }
-        // readByte += gzread(index, &(content->size),sizeof(int));
-        // readByte += gzread(index, content->name,sizeof(content->name));
-        // readByte += gzread(index, content->hash,sizeof(content->hash));
-        // memset(content,0,sizeof(indexContent));
+
     }
     gzclose(index);
 }
-// void saveIndex(contents* hashs,gzFile index){
-//     if(hashs != NULL){
-//         saveIndex(hashs->left,index);
-//         if((gzwrite(index, hashs->content,sizeof(indexContent))) == 0){
-//             DieWithError("gzwrite error");
-//         }
-//         else{
-//             fprintf(stderr,"\nIndexing -> %s", hashs->content->name);
-//         }
-//         saveIndex(hashs->right,index);
-//     }
-// }
+
 void saveIndex(contents* hashs,gzFile* index){
     if(index == NULL){
         perror("gzopen error");
     }
-    if (hashs == NULL)
+    if (hashs == NILL)
         return;
     saveIndex(hashs->left,index);
     if((gzwrite(*index, hashs->content,sizeof(indexContent))) == 0){
@@ -270,244 +488,237 @@ void saveIndex(contents* hashs,gzFile* index){
     saveIndex(hashs->right,index);
 }
 
-// void saveIndex(contents *root, FILE* index) 
-// { 
-//     unsigned char dump = 0xFF;
-//     if (root == NULL){ 
-//         for(int i=0;i<sizeof(indexContent);i++){
-//             fwrite(dump,1,1,index);
-//         }
-//     }
-//     // Else, store current node and recur for its children 
-//     fwrite(root->content, sizeof(indexContent), 1, index);
-//     serialize(root->left, index); 
-//     serialize(root->right, index); 
-// } 
-  
-// // This function constructs a tree from a file pointed by 'fp' 
-// void deSerialize(Node* &root, FILE* index) 
-// { 
-//     // Read next item from file. If theere are no more items or next 
-//     // item is marker, then return 
-//     int val;
-//     indexContent* content = (indexContent*)malloc(sizeof(indexContent));
-//     if ( !fscanf(fp, "%d ", &val) || val == MARKER) 
-//        return; 
+// // Left Rotation
+// void LeftRotate(contents **root,contents *x){
+//     if (!x || !x->right)
+//         return ;
+//     //y sto'R' pointer of right child of x
+//     contents *y = x->right;
 
-//     if( !fread(content, sizeof(indexContent), 1, index) || 
-  
-//     // Else create node with this item and recur for children 
-//     root = newNode(val); 
-//     deSerialize(root->left, fp); 
-//     deSerialize(root->right, fp); 
+//     //store y's left subtree's pointer as x's right child
+//     x->right = y->left;
+
+//     //update parent pointer of x's right
+//     if (x->right != NILL)
+//         x->right->parent = x;
+
+//     //update y's parent pointer
+//     y->parent = x->parent;
+
+//     // if x's parent is null make y as root of tree
+//     if (x->parent == NILL)
+//         (*root) = y;
+
+//     // store y at the place of x
+//     else if (x == x->parent->left)
+//         x->parent->left = y;
+//     else    x->parent->right = y;
+
+//     // make x as left child of y
+//     y->left = x;
+
+//     //update parent pointer of x
+//     x->parent = y;
 // }
-// void inorder(Node *root) 
-// { 
-//     if (root != NULL) 
-//     { 
-//         inorder(root->left); 
-//         printf("%s \n", root->d); 
-//         inorder(root->right); 
-//     } 
-// } 
-// Left Rotation
-void LeftRotate(contents **root,contents *x){
-    if (!x || !x->right)
-        return ;
-    //y sto'R' pointer of right child of x
-    contents *y = x->right;
-
-    //store y's left subtree's pointer as x's right child
-    x->right = y->left;
-
-    //update parent pointer of x's right
-    if (x->right != NULL)
-        x->right->parent = x;
-
-    //update y's parent pointer
-    y->parent = x->parent;
-
-    // if x's parent is null make y as root of tree
-    if (x->parent == NULL)
-        (*root) = y;
-
-    // store y at the place of x
-    else if (x == x->parent->left)
-        x->parent->left = y;
-    else    x->parent->right = y;
-
-    // make x as left child of y
-    y->left = x;
-
-    //update parent pointer of x
-    x->parent = y;
-}
-// Right Rotation (Similar to LeftRotate)
-void rightRotate(contents **root,contents *y){
-    if (!y || !y->left)
-        return ;
-    contents *x = y->left;
-    y->left = x->right;
-    if (x->right != NULL)
-        x->right->parent = y;
-    x->parent =y->parent;
-    if (x->parent == NULL)
-        (*root) = x;
-    else if (y == y->parent->left)
-        y->parent->left = x;
-    else y->parent->right = x;
-    x->right = y;
-    y->parent = x;
-}
+// // Right Rotation (Similar to LeftRotate)
+// void rightRotate(contents **root,contents *y){
+//     if (!y || !y->left)
+//         return ;
+//     contents *x = y->left;
+//     y->left = x->right;
+//     if (x->right != NILL)
+//         x->right->parent = y;
+//     x->parent =y->parent;
+//     if (x->parent == NILL)
+//         (*root) = x;
+//     else if (y == y->parent->left)
+//         y->parent->left = x;
+//     else y->parent->right = x;
+//     x->right = y;
+//     y->parent = x;
+// }
 
 
-void insertFixUp(contents **root,contents *z){
-    // iterate until z is not the root and z's parent color is 'R'
-  while (z != *root && z != (*root)->left && z != (*root)->right && z->parent->color == 'R')
-  {
-      contents *y;
-      // Find uncle and store uncle in y
-      if (z->parent && z->parent->parent && z->parent == z->parent->parent->left)
-          y = z->parent->parent->right;
-      else
-          y = z->parent->parent->left;
+// void insertFixUp(contents **root,contents *z){
+//     // iterate until z is not the root and z's parent color is 'R'
+//   while (z != *root && z != (*root)->left && z != (*root)->right && z->parent->color == 'R')
+//   {
+//       contents *y;
+//       // Find uncle and store uncle in y
+//       if (z->parent && z->parent->parent && z->parent == z->parent->parent->left)
+//           y = z->parent->parent->right;
+//       else
+//           y = z->parent->parent->left;
 
-      // If uncle is 'R', do following
-      // (i)  Change color of parent and uncle as 'B'
-      // (ii) Change color of grandparent as 'R'
-      // (iii) Move z to grandparent
-      // if (!y)
-      //     z = z->parent->parent;
-      if (y!=NULL && y->color == 'R')
-      {
-          y->color = 'B';
-          z->parent->color = 'B';
-          z->parent->parent->color = 'R';
-          z = z->parent->parent;
-      }
-      // Uncle is 'B', there are four cases (LL, LR, RL and RR)
-      else
-      {
-          // Left-Left (LL) case, do following
-          // (i)  Swap color of parent and grandparent
-          // (ii) Right Rotate Grandparent
-          if (z->parent == z->parent->parent->left &&
-              z == z->parent->left)
-          {
-              char ch = z->parent->color ;
-              z->parent->color = z->parent->parent->color;
-              z->parent->parent->color = ch;
-              rightRotate(root,z->parent->parent);
-          }
+//       // If uncle is 'R', do following
+//       // (i)  Change color of parent and uncle as 'B'
+//       // (ii) Change color of grandparent as 'R'
+//       // (iii) Move z to grandparent
+//     //    if (!y)
+//       //     z = z->parent->parent;
+//       if(y==NULL)
+//         break;
+//       if (y->color == 'R')
+//       {
+//           y->color = 'B';
+//           z->parent->color = 'B';
+//           z->parent->parent->color = 'R';
+//           z = z->parent->parent;
+//       }
+//       // Uncle is 'B', there are four cases (LL, LR, RL and RR)
+//       else
+//       {
+//           // Left-Left (LL) case, do following
+//           // (i)  Swap color of parent and grandparent
+//           // (ii) Right Rotate Grandparent
+//           if (z->parent == z->parent->parent->left &&
+//               z == z->parent->left)
+//           {
+//               char ch = z->parent->color ;
+//               z->parent->color = z->parent->parent->color;
+//               z->parent->parent->color = ch;
+//               rightRotate(root,z->parent->parent);
+//           }
 
-          // Left-Right (LR) case, do following
-          // (i)  Swap color of current node  and grandparent
-          // (ii) Left Rotate Parent
-          // (iii) Right Rotate Grand Parent
-          if (z->parent && z->parent->parent && z->parent == z->parent->parent->left &&
-              z == z->parent->right)
-          {
-              char ch = z->color ;
-              z->color = z->parent->parent->color;
-              z->parent->parent->color = ch;
-              LeftRotate(root,z->parent);
-              rightRotate(root,z->parent->parent);
-          }
+//           // Left-Right (LR) case, do following
+//           // (i)  Swap color of current node  and grandparent
+//           // (ii) Left Rotate Parent
+//           // (iii) Right Rotate Grand Parent
+//           if (z->parent && z->parent->parent && z->parent == z->parent->parent->left &&
+//               z == z->parent->right)
+//           {
+//               char ch = z->color ;
+//               z->color = z->parent->parent->color;
+//               z->parent->parent->color = ch;
+//               LeftRotate(root,z->parent);
+//               rightRotate(root,z->parent->parent);
+//           }
 
-          // Right-Right (RR) case, do following
-          // (i)  Swap color of parent and grandparent
-          // (ii) Left Rotate Grandparent
-          if (z->parent && z->parent->parent &&
-              z->parent == z->parent->parent->right &&
-              z == z->parent->right)
-          {
-              char ch = z->parent->color ;
-              z->parent->color = z->parent->parent->color;
-              z->parent->parent->color = ch;
-              LeftRotate(root,z->parent->parent);
-          }
+//           // Right-Right (RR) case, do following
+//           // (i)  Swap color of parent and grandparent
+//           // (ii) Left Rotate Grandparent
+//           if (z->parent && z->parent->parent &&
+//               z->parent == z->parent->parent->right &&
+//               z == z->parent->right)
+//           {
+//               char ch = z->parent->color ;
+//               z->parent->color = z->parent->parent->color;
+//               z->parent->parent->color = ch;
+//               LeftRotate(root,z->parent->parent);
+//           }
 
-          // Right-Left (RL) case, do following
-          // (i)  Swap color of current node  and grandparent
-          // (ii) Right Rotate Parent
-          // (iii) Left Rotate Grand Parent
-          if (z->parent && z->parent->parent && z->parent == z->parent->parent->right &&
-              z == z->parent->left)
-          {
-              char ch = z->color ;
-              z->color = z->parent->parent->color;
-              z->parent->parent->color = ch;
-              rightRotate(root,z->parent);
-              LeftRotate(root,z->parent->parent);
-          }
-      }
+//           // Right-Left (RL) case, do following
+//           // (i)  Swap color of current node  and grandparent
+//           // (ii) Right Rotate Parent
+//           // (iii) Left Rotate Grand Parent
+//           if (z->parent && z->parent->parent && z->parent == z->parent->parent->right &&
+//               z == z->parent->left)
+//           {
+//               char ch = z->color ;
+//               z->color = z->parent->parent->color;
+//               z->parent->parent->color = ch;
+//               rightRotate(root,z->parent);
+//               LeftRotate(root,z->parent->parent);
+//           }
+//       }
+//   }
+//   (*root)->color = 'B'; //keep root always 'B'
+// }
+
+unsigned countDepth(char* path){
+  int len = strlen(path);
+  unsigned int count=0;
+  for(int i = 0 ; i<len;i++){
+    if(path[i] == '/')
+      count++;
   }
-  (*root)->color = 'B'; //keep root always 'B'
+  return count;
 }
 
-// Utility function to insert newly node in 'R''B' tree
-void indexInsert(contents **root, indexContent* content){
-  // Allocate memory for new node
-  contents *z = (contents*)malloc(sizeof(contents));
-  z->content = content;
-  z->left = z->right = z->parent = NULL;
+// void indexInsert(contents **root, indexContent* content){
+//   // Allocate memory for new node
+//   contents *z = (contents*)malloc(sizeof(contents));
+//   z->content = content;
+//   z->left = z->right = z->parent = NILL;
 
 
-    //if root is null make z as root
-  if (*root == NULL){
-      z->color = 'B';
-      (*root) = z;
-  }
-  else{
-    contents *y = NULL;
-    contents *x = (*root);
+//     //if root is null make z as root
+//   if (*root == NILL){
+//       z->color = 'B';
+//       (*root) = z;
+//   }
+//   else{
+//     contents *y = NILL;
+//     contents *x = (*root);
 
-    char *dirOffset = strrchr(z->content->name,'/');
-    char *offset;
-    unsigned int a;
-    unsigned int b;
-    a = dirOffset - z->content->name;
-    // Follow standard BST insert steps to first insert the node
-    while (x != NULL){
-        y = x;
-        offset = strrchr(x->content->name,'/');
-        b = offset - x->content->name;
-        if(b < a){
-          x = x->left;
-        }
-        else if(b > a){
-          x = x->right;
-        }
-        else{
-          if(!strcmp(z->content->name,x->content->name)){
-            free(x->content);
-            x->content = content;
-            return;
-          }
-          else if (strcmp(z->content->name,x->content->name) < 0 )
-              x = x->left;
-          else
-              x = x->right;
-        }
-    }
-    z->parent = y;
-    if(!strcmp(z->content->name,y->content->name)){
-        free(y->content);
-        y->content = content;
-        return;
-    }
-    else if (strcmp(z->content->name, y->content->name) > 0)
-        y->right = z;
-    else
-        y->left = z;
-    z->color = 'R';
+//     // char *dirOffset = strrchr(z->content->name,'/');
+//     // char *offset;
+//     unsigned int a;
+//     unsigned int b;
+//     // a = dirOffset - z->content->name;
+//     a = countDepth(z->content->name);
+//     // Follow standard BST insert steps to first insert the node
+//     while (x != NILL){
+//         y = x;
+//         // offset = strrchr(x->content->name,'/');
+//         // b = offset - x->content->name;
+//         // b =countDepth(x->content->name);
+//         if(!strcmp(x->content->name,z->content->name)){
+//           free(x->content);
+//           x->content = content;
+//           return;
+//         }
+//         else if(strcmp(x->content->name, z->content->name) > 0)
+//           x = x->left;
+//         else if(strcmp(x->content->name, z->content->name) < 0)
+//           x = x->right;
+//         // if(b < a){
+//         //   x = x->left;
+//         // }
+//         // else if(b > a){
+//         //   x = x->right;
+//         // }
+//         // else{
+//         //   if(!strcmp(z->content->name,x->content->name)){
+//         //     free(x->content);
+//         //     x->content = content;
+//         //     return;
+//         //   }
+//         //   else if (strcmp(z->content->name,x->content->name) < 0 )
+//         //       x = x->left;
+//         //   else
+//         //       x = x->right;
+//         // }
+//     }
+//     z->parent = y;
+//     // if(!strcmp(z->content->name,y->content->name)){
+//     //     free(y->content);
+//     //     y->content = content;
+//     //     return;
+//     // }
+//     if(strcmp(y->content->name, z->content->name) > 0)
+//       y->left = z;
+//     else{
+//       y->right = z;
+//     }
+//     // if (b > a)
+//     //     y->right = z;
+//     // else if(b< a)
+//     //     y->left = z;
+//     // else{
+//     //   if (strcmp(z->content->name,y->content->name) < 0 )
+//     //     y->left = z;
+//     //   else
+//     //     y->right = z;
+//     // }
+//     z->color = 'R';
 
-    // call insertFixUp to fix reb-'B' tree's property if it
-    // is voilated due to insertion.
-    insertFixUp(root,z);
-    // InsertRepairTree(z);
-  }
-}
+//     // call insertFixUp to fix reb-'B' tree's property if it
+//     // is voilated due to insertion.
+//     insertFixUp(root,z);
+//     // InsertRepairTree(z);
+//   }
+// }
 
 void push(struct container **contain, contents* hashs){
     struct container* head = *contain;
@@ -520,6 +731,9 @@ void push(struct container **contain, contents* hashs){
 }
 contents* pop(struct container **contain){
     struct container* head = *contain;
+	if(*contain == NULL){
+		return NULL;
+	}
     contents* r = head->hashs;
     *contain = (*contain)->next;
     free(head);

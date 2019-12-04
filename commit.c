@@ -5,6 +5,7 @@
 #include <zlib.h>
 #include <sys/stat.h>
 #include "index.h"
+#include "hash.h"
 
 
 unsigned int checkRepository();
@@ -35,17 +36,7 @@ unsigned int checkRepository();
 //     }
 
 // }
-void createTreeObject(char* contents,char* objectName){
-    gzFile object;
-    int readByte;
-    object = gzopen(objectName,"wb");
-    if(object==NULL)
-        perror("gzwrite error");
-    if(gzwrite(object,contents,sizeof(contents)) < 0)
-        perror("gzwrite error");
-    gzclose(object);
-    fprintf(stderr,"Tree object CREATED -> %s",objectName);
-}
+
 // unsigned char* addTree(hashNode* hashs, int objNum){
 //     hashNode* temp;
 //     temp = hashs;
@@ -119,6 +110,83 @@ char* isSame(char* before, char* current){
     }
     return root;
 }
+void createTreeObject(unsigned char* hash,char* context){
+    gzFile object;
+    int readByte;
+    char dir[100];
+    char path[256];
+
+    sprintf(dir,"./.VMS/objects/%02x%02x",hash[0],hash[1]);
+    sprintf(path,"%s/",dir);
+
+     for(int i=2; i < 32; i++){                // Hash to char*
+            sprintf(path+strlen(path), "%02x",hash[i]); 
+    }
+    if(access(dir, F_OK) != -1 ){     //first two char of hash dir is exixted
+        // fprintf(stderr,"%s -> ",path);
+        if(access(path, F_OK) != -1){  //Object is Existed
+                fprintf(stderr,"%s\nObject Existed\n",path+19);
+                return;
+        }
+    }else{
+        mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    }
+    fprintf(stderr,"TREE object name : %s", path);
+
+
+    object = gzopen(path,"wb");
+    if(object==NULL)
+        perror("gzwrite error");
+    if(gzwrite(object,context,strlen(context)) < 0)
+        perror("gzwrite error");
+    gzclose(object);
+    fprintf(stderr,"Tree object CREATED -> %s",path);
+}
+void getLeafDir(contents *head,char* objectContext){
+    static int beforeDepth = 0;
+    static struct container* contain = NULL;
+    contents* del;
+    static int dbgCount;
+    if(head!=NILL){
+        getLeafDir(head->left,objectContext);
+        dbgCount++;
+        int depth = countDepth(head->content->name);
+        if(beforeDepth!= 0 && beforeDepth > depth){
+            fprintf(stderr,"break!! dbgcont : %d depth : %d\n",dbgCount,depth);
+            sprintf(objectContext+strlen(objectContext),"\n");
+            sprintf(objectContext+strlen(objectContext),"%s %s",head->content->type, head->content->name);
+            for(int i = 0; i>32;i++){
+                sprintf(objectContext+strlen(objectContext),"%02x",head->content->hash[i]);
+            }
+            beforeDepth = 0;
+            while((del = pop(&contain)) != NULL){
+                fprintf(stderr,"poping");
+                red_black_delete(del);
+                fprintf(stderr,"complete delete\n");
+            }
+            fprintf(stderr,"pop is done\n");
+            return;
+        }else{
+            push(&contain,head);
+            // red_black_delete(head);
+            beforeDepth = depth;
+            getLeafDir(head->right,objectContext);
+        }
+    }
+}
+void dirCheck(){
+    char objectContext[1024]= {0,};
+    unsigned char* hash;
+    char objectName[256];
+    while(ROOT->right != NILL && ROOT->left != NILL){
+        sprintf(objectContext,"Tree");
+        getLeafDir(ROOT,objectContext);
+        fprintf(stderr,"leafdone");
+        hash = hashchars(objectContext);
+        createTreeObject(hash,objectContext);
+    }
+}
+
 void inOrderCheck(contents* hashs){
     indexContent* content;
     static struct container* contain;
@@ -141,7 +209,7 @@ void inOrderCheck(contents* hashs){
         
         if(!strncmp(before_dir,hashs->content->name,before) && before == dirOffset){
             fprintf(stderr,"Pushing %s \t: %d\n",hashs->content->name,stackCOunt);
-            indexInsert(&dir,hashs->content);
+            // indexInsert(&dir,hashs->content);
         }
         else{
             // createTreeObject(dir,);
@@ -153,7 +221,7 @@ void inOrderCheck(contents* hashs){
             push(&contain,dir);
             stackCOunt++;
             dir = NULL;
-            indexInsert(&dir,hashs->content);
+            // indexInsert(&dir,hashs->content);
             }
             fprintf(stderr,"%s  <- chdir\t: %d\n",hashs->content->name,stackCOunt);
 
@@ -196,17 +264,25 @@ char* upperDir(char* path){
 //     return r; 
 // }
 void commit(contents** hashs){
+   
     //char* temp = (*hashs)->content->name;
-    loadIndex(hashs);
-    fprintf(stderr,"%d %d\n",(*hashs)->left,(*hashs)->right);
+    loadIndex();
+    // red_black_delete(ROOT);
+
+    // inorder(ROOT);
+    fprintf(stderr,"%d %d\n",(ROOT)->left,(ROOT)->right);
     if(*hashs==NULL)
         perror("./.VMS/index corrupted");
-    inOrderCheck(*hashs);
+   // dirCheck();
 }
 void commitCmd(){
     /* if index file is NOT exist */
+    NILL = malloc(sizeof(contents));
+    NILL->color =BLACK;
+    ROOT = NILL;
+    
     contents** hashs = (contents**)malloc(sizeof(contents*));
-    *hashs = NULL;
+    *hashs = NILL;
     
     if(access("./.VMS", F_OK) == -1){
         fprintf(stderr,".VMS is NOT EXIST\n");
