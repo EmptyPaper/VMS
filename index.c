@@ -211,7 +211,9 @@ void red_black_insert_fixup(contents *z){
 
 void left_rotate(contents *x){
 	contents *y;
-	
+	if(y==NILL || y->right==NILL){
+		return;
+	}
 	/* Make y's left child x's right child */
 	y = x->right;
 	x->right = y->left;
@@ -253,7 +255,11 @@ void right_rotate(contents *x){
 
 	/* Make y's right child x's left child */
 	y = x->left;
+	if(y==NILL || y->right==NILL){
+		return;
+	}
 	x->left = y->right;
+
 	if(y->right != NILL){
 		y->right->parent = x;
 	}
@@ -273,6 +279,7 @@ void right_rotate(contents *x){
 	/* Make y, x's parent and x, y's child */
 	y->right = x;
 	x->parent = y;
+
 }
 
 /*
@@ -298,7 +305,6 @@ void red_black_delete(contents *z){
 
 	y = z;
 	yOriginalColor = y->color;
-
 	if(z->left == NILL){
 		x = z->right;
 		red_black_transplant(z, z->right);
@@ -327,7 +333,6 @@ void red_black_delete(contents *z){
 		y->left->parent = y;
 		y->color = z->color;
 	}
-
 	if(yOriginalColor == BLACK){
 		red_black_delete_fixup(x);
 	}
@@ -363,7 +368,6 @@ void red_black_delete(contents *z){
 
 void red_black_delete_fixup(contents *x){
 	contents *w;	
-
 	while(x != ROOT && x->color == BLACK){
 		
 		if(x == x->parent->left){
@@ -382,7 +386,6 @@ void red_black_delete_fixup(contents *x){
 				x = x->parent;
 			}
 			else{
-
 				if(w->right->color == BLACK){
 					w->color = RED;
 					w->left->color = BLACK;
@@ -408,19 +411,21 @@ void red_black_delete_fixup(contents *x){
 				right_rotate(x->parent);
 				w = x->parent->left;
 			}
-
+			
 			if(w->left->color == BLACK && w->right->color == BLACK){
 				w->color = RED;
 				x->parent->color = BLACK;
 				x = x->parent;
+
 			}
-			else{
+			else{			
 
 				if(w->left->color == BLACK){
 					w->color = RED;
 					w->right->color = BLACK;
 					left_rotate(w);
 					w = x->parent->left;
+
 				}
 
 				w->color = x->parent->color;
@@ -433,7 +438,6 @@ void red_black_delete_fixup(contents *x){
 		}
 
 	}
-
 	x->color = BLACK;
 }
 
@@ -448,7 +452,6 @@ void red_black_transplant(contents *u, contents *v){
 	else{
 		u->parent->right = v;
 	}
-
 	v->parent = u->parent;
 }
 
@@ -723,11 +726,11 @@ unsigned countDepth(char* path){
 void push(struct container **contain, contents* hashs){
     struct container* head = *contain;
     struct container* temp = malloc(sizeof(struct container));
-    if(head == NULL)
-        head = malloc(sizeof(struct container));
+    
     temp->hashs = hashs;
     temp->next = head;
     (*contain) = temp;
+	PUSHCOUNT++;
 }
 contents* pop(struct container **contain){
     struct container* head = *contain;
@@ -737,6 +740,7 @@ contents* pop(struct container **contain){
     contents* r = head->hashs;
     *contain = (*contain)->next;
     free(head);
+	PUSHCOUNT--;
     return r;
 }
 

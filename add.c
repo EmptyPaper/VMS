@@ -98,7 +98,7 @@ void add(char* dirName){
     if (dir){
         while ((path=readdir(dir)) != NULL){
             if (!strcmp(path->d_name, ".") || !strcmp(path->d_name, "..") 
-            || !strcmp(path->d_name, ".VMS")){
+            || !strcmp(path->d_name, ".VMS") || !strcmp(path->d_name,".git")){
                 continue;
             }
             len = path_len + strlen(path->d_name) + 2; 
@@ -147,7 +147,6 @@ void addCmd(int argc,char* argv[]){
     NILL = malloc(sizeof(contents));
     NILL->color=BLACK;
     ROOT = NILL;
-
     if(access("./.VMS",F_OK) != -1){
         if(access("./.VMS/index",F_OK) != -1){
             loadIndex();

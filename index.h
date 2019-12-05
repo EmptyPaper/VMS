@@ -56,6 +56,8 @@ void red_black_delete_fixup(contents *x);
 contents* NILL;
 contents* ROOT;
 
+unsigned int PUSHCOUNT;
+
 
 
 
