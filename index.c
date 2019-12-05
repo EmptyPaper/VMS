@@ -83,9 +83,9 @@ void red_black_insert(indexContent* content){
 			x = x->right;
 		}
 		else{
-			if(strcmp(x->content->name,z->content->name) > 0)
+			if(strcmp(x->content->name,z->content->name) < 0)
 				x = x->left;
-			else if(strcmp(x->content->name,z->content->name) < 0)
+			else if(strcmp(x->content->name,z->content->name) > 0)
 				x = x->right;
 			else if(!strcmp(x->content->name,z->content->name)){
 				free(x->content);
@@ -104,9 +104,9 @@ void red_black_insert(indexContent* content){
 		y->right = z;
 	}
 	else{
-		if(strcmp(y->content->name,z->content->name) > 0)
+		if(strcmp(y->content->name,z->content->name) < 0)
 			y->left = z;
-		else if(strcmp(y->content->name,z->content->name) < 0)
+		else if(strcmp(y->content->name,z->content->name) > 0)
 			y->right = z;
 	}
 	z->parent = y;
@@ -211,11 +211,11 @@ void red_black_insert_fixup(contents *z){
 
 void left_rotate(contents *x){
 	contents *y;
-	if(y==NILL || y->right==NILL){
+	y = x->right;
+	if(y==NILL || y->left==NILL){
 		return;
 	}
 	/* Make y's left child x's right child */
-	y = x->right;
 	x->right = y->left;
 	if(y->left != NILL){
 		y->left->parent = x;
@@ -253,8 +253,8 @@ void left_rotate(contents *x){
 void right_rotate(contents *x){
 	contents *y;
 
-	/* Make y's right child x's left child */
 	y = x->left;
+	/* Make y's right child x's left child */
 	if(y==NILL || y->right==NILL){
 		return;
 	}
@@ -367,12 +367,11 @@ void red_black_delete(contents *z){
  */
 
 void red_black_delete_fixup(contents *x){
-	contents *w;	
+	contents *w;
 	while(x != ROOT && x->color == BLACK){
-		
+		// fprintf(stderr,"dbg");
 		if(x == x->parent->left){
 			w = x->parent->right;
-
 			if(w->color == RED){
 				w->color = BLACK;
 				x->parent->color = RED;
@@ -467,7 +466,7 @@ void loadIndex(){
     while(!gzeof(index)){
         content = malloc(sizeof(indexContent));
         if((readByte = gzread(index, content,sizeof(indexContent))) > 0){
-             fprintf(stderr,"load data  -> %s, %d\n",content->name,readByte);
+            // fprintf(stderr,"load data  -> %s, %d\n",content->name,readByte);
             red_black_insert(content);
         }
 

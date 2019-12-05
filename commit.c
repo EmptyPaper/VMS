@@ -10,6 +10,14 @@
 
 unsigned int checkRepository();
 
+char* upperDir(char* path){
+    char* dir = malloc(255);
+    char *c = strrchr(path,'/');
+    unsigned int offset = c - path;
+    snprintf(dir,offset+1,"%s",path);
+    dir[offset] = '\0';
+    return dir;
+}
 // void vector(){
 
 // }
@@ -110,11 +118,13 @@ char* isSame(char* before, char* current){
     }
     return root;
 }
-void createTreeObject(unsigned char* hash,char* context){
+void createTreeObject(unsigned char* hash,char* context,char* up){
     gzFile object;
     int readByte;
     char dir[100];
     char path[256];
+    indexContent* content;
+    int flag=0;
 
     sprintf(dir,"./.VMS/objects/%02x%02x",hash[0],hash[1]);
     sprintf(path,"%s/",dir);
@@ -125,23 +135,30 @@ void createTreeObject(unsigned char* hash,char* context){
     if(access(dir, F_OK) != -1 ){     //first two char of hash dir is exixted
         // fprintf(stderr,"%s -> ",path);
         if(access(path, F_OK) != -1){  //Object is Existed
-                fprintf(stderr,"%s\nObject Existed\n",path);
-                return;
+                fprintf(stderr,"%s -> Object Existed\n",path);
+                flag=1;
         }
     }else{
         mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     }
-
-    object = gzopen(path,"wb");
-    if(object==NULL)
-        perror("gzwrite error");
-    if(gzwrite(object,context,strlen(context)) < 0)
-        perror("gzwrite error");
-    gzclose(object);
-    fprintf(stderr,"Tree object CREATED -> %s",path);
-
+    if(flag == 0){
+        object = gzopen(path,"wb");
+        if(object==NULL)
+            perror("gzwrite error");
+        if(gzwrite(object,context,strlen(context)) < 0)
+            perror("gzwrite error");
+        gzclose(object);
+        fprintf(stderr,"%s <- Tree object CREATED\n",path);
+    }
     /* AND INSERT INTO TREE */
-
+    content = malloc(sizeof(indexContent));
+    memcpy(content->hash, hash,32);
+    strcpy(content->name, up);
+    strcpy(content->type,"tree");
+    content->size = -1;
+    content->conflict = 0;
+    // fprintf(stderr,"new tree object : %s\n",content->name);
+    red_black_insert(content);
 }
 int getLeafDir(contents *head,struct container** contain){
     static int beforeDepth = 0;
@@ -155,7 +172,7 @@ int getLeafDir(contents *head,struct container** contain){
         dbgCount++;
         int depth = countDepth(head->content->name);
         if(beforeDepth!= 0 && beforeDepth > depth){
-            fprintf(stderr,"break!! dbgcont : %d depth : %d\n",dbgCount,depth);
+            // fprintf(stderr,"break!! dbgcont : %d depth : %d\n",dbgCount,depth);
             beforeDepth = 0;
             // while((del = pop(contain)) != NULL){
             //     fprintf(stderr,"poping %s \n",del->content->name);
@@ -165,7 +182,7 @@ int getLeafDir(contents *head,struct container** contain){
             terminator++;
             return terminator; // no return end all sequence;
         }else{
-            fprintf(stderr,"pushgin %s %d\n",head->content->name,head->color);
+            // fprintf(stderr,"pushgin %s %d\n",head->content->name,head->color);
             push(contain,head);
             // red_black_delete(head);
             beforeDepth = depth;
@@ -180,34 +197,29 @@ int getLeafDir(contents *head,struct container** contain){
 void createRootTreeObject(unsigned char* hash,char* objectContext){
 
 }
-void dirCheck(){
+char* dirCheck(){
     char* objectContext;
     unsigned char* hash;
     char objectName[256];
     int flag=-1;
     contents *del;
+    char* path;
+    char* up;
     struct container** contain = malloc(sizeof(struct container*));
     *contain = NULL;
     while(flag != 0){
         flag = getLeafDir(ROOT,contain);
-        fprintf(stderr,"leafdone %d\n",PUSHCOUNT);
         objectContext = (char*)malloc(sizeof(char)*128*PUSHCOUNT);
         sprintf(objectContext,"Tree");
         while((del = pop(contain)) != NULL){
+            path = del->content->name;
             if(!strcmp(del->content->name,"./commit")){
-            fprintf(stderr,"poping %s %d\n",del->content->name, del->color);
-            fprintf(stderr,"Parent %s %d\n",del->parent->content->name, del->parent->color);
-            fprintf(stderr,"SIbling %s %d\n",del->parent->left->content->name,del->parent->left->color);
-            fprintf(stderr,"P'Sibling %s %d\n",del->parent->parent->left->content->name,del->parent->parent->left->color);
-            fprintf(stderr,"new paprent %s %d\n",del->parent->parent->content->name ,del->parent->parent->color);
+            // fprintf(stderr,"poping %s %d\n",del->content->name, del->color);
+            // fprintf(stderr,"Parent %s %d\n",del->parent->content->name, del->parent->color);
+            // fprintf(stderr,"SIbling %s %d\n",del->parent->left->content->name,del->parent->left->color);
+            // fprintf(stderr,"P'Sibling %s %d\n",del->parent->parent->left->content->name,del->parent->parent->left->color);
+            // fprintf(stderr,"new paprent %s %d\n",del->parent->parent->content->name ,del->parent->parent->color);
             }
-
-            fprintf(stderr,"HEAD : %s \n",ROOT->content->name);
-            if(del->right!=NILL)
-                fprintf(stderr,"poping %s \n",del->right->content->name);
-            if(del->left!=NILL)
-                fprintf(stderr,"poping %s \n",del->left->content->name);
-
 
             sprintf(objectContext+strlen(objectContext),"\n");
             sprintf(objectContext+strlen(objectContext),"%s %s ",del->content->type, del->content->name);
@@ -215,29 +227,27 @@ void dirCheck(){
                 sprintf(objectContext+strlen(objectContext),"%02x",del->content->hash[i]);
             }
             red_black_delete(del);
-            fprintf(stderr,"complete delete\n");
+             fprintf(stderr,"complete delete\n");
         }
+        up = upperDir(path);
         hash = hashchars(objectContext);
-        createTreeObject(hash,objectContext);
+        createTreeObject(hash,objectContext,up);
         free(objectContext);
     }
-   
-}
-
-char* upperDir(char* path){
-    char* dir = malloc(255);
-    char *c = strrchr(path,'/');
-    unsigned int offset = c - path;
-    strncpy(dir,path,offset);
-    return dir;
+    objectContext = malloc(sizeof(char)*65);
+    for(int i = 0; i<32;i++){
+        sprintf(objectContext+strlen(objectContext),"%02x",hash[i]);
+    }
+    fprintf(stderr,"root tree's hash : %s\n", objectContext);
+    return objectContext;
 }
 void commit(){
+    char* rootTree;
     loadIndex();
-
-    fprintf(stderr,"%d %d\n",(ROOT)->left,(ROOT)->right);
     if(ROOT==NILL)
         perror("./.VMS/index corrupted");
-    dirCheck();
+    rootTree = dirCheck();
+    
 }
 void commitCmd(){
     /* if index file is NOT exist */
