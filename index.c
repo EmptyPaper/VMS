@@ -187,7 +187,6 @@ void red_black_insert_fixup(contents *z){
 					z = z->parent;
 					right_rotate(z);
 				}
-
 				z->parent->color = BLACK;
 				z->parent->parent->color = RED;
 				left_rotate(z->parent->parent);
@@ -212,7 +211,7 @@ void red_black_insert_fixup(contents *z){
 void left_rotate(contents *x){
 	contents *y;
 	y = x->right;
-	if(y==NILL || y->left==NILL){
+	if(x==NILL || x->right==NILL){
 		return;
 	}
 	/* Make y's left child x's right child */
@@ -255,7 +254,7 @@ void right_rotate(contents *x){
 
 	y = x->left;
 	/* Make y's right child x's left child */
-	if(y==NILL || y->right==NILL){
+	if(x== NILL || x->left){
 		return;
 	}
 	x->left = y->right;
@@ -378,7 +377,6 @@ void red_black_delete_fixup(contents *x){
 				left_rotate(x->parent);
 				w = x->parent->right;
 			}
-
 			if(w->left->color == BLACK && w->right->color == BLACK){
 				w->color = RED;
 				x->parent->color = BLACK;

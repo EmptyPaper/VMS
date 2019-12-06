@@ -6,9 +6,9 @@
 #include <sys/stat.h>
 #include "index.h"
 #include "hash.h"
+#include "genKey.h"
+#include "attr.h"
 
-
-unsigned int checkRepository();
 
 char* upperDir(char* path){
     char* dir = malloc(255);
@@ -19,77 +19,6 @@ char* upperDir(char* path){
     return dir;
 }
 // void vector(){
-
-// }
-// void hashChain(){
-//     FILE *HEAD;
-//     char buffer[256];
-//     char code_name[64];
-//     if(checkRepository()){
-//         HEAD = fopen("./.VMS", "r");
-//         if(HEAD == NULL){
-//             perror("VMS FILE IS CONTAMINATED");
-//         }
-//         fgets(buffer,256, HEAD);
-//         if(strcmp(buffer,"ref : master") != 0){
-//             fprintf(stderr,"first commit");
-//         }
-//         else{
-//             strcpy(code_name,buffer+13);
-            
-//         }
-//     }
-//     else{
-//         perror("VMS is not initiated");
-//     }
-
-// }
-
-// unsigned char* addTree(hashNode* hashs, int objNum){
-//     hashNode* temp;
-//     temp = hashs;
-//     unsigned char* treeHash;
-//     char* treeobj = (char*)malloc((sizeof(char))*objNum<<8); //* 32
-//     char dir[100]; //Just apporxiamted
-//     char path[100];
-
-//     sprintf(treeobj,"Tree %d%c\nblob ",objNum,'\0');
-
-//     while(temp!=NULL){
-//         sprintf(treeobj,"\n");
-//         snprintf(treeobj,32,"blob %s\0 %s",temp->name,temp->hash);
-//         temp = temp->next;
-//     }
-//     treeHash = hashchars(treeobj);
-
-//     sprintf(dir,"./.VMS/objects/%02x%02x",treeHash[0],treeHash[1]);
-//     sprintf(path,"%s/",dir);
-//     for(int i=2; i < 32; i++){                // Hash to char*
-//             sprintf(path, "%02x",treeHash[i]); 
-//     }
-//     if(checkfile(dir)){     //first two char of hash dir is exixted
-//         fprintf(stderr,"%s -> ");
-//         if(checkFile(path)){  //Object is Existed
-//                 fprintf(stderr,"%s\nObject Existed\n",path+19);
-//                 return treeHash;
-//         }
-//     }else{
-//         mkdir(dir, "S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH");
-//     }
-//     createTreeObject(treeobj,dir);
-//     updateIndex(treeHash,hashs);
-//     return hashToString(treeHash);
-// // }
-// void dirCommit(char* dirName,contents* content){
-//     contents* itor = content;
-//     struct stat statbuf;
-//     while(itor!=NULL){
-//         if(!stat(,statbuf)){
-            
-//         }
-//         itor = itor->right;
-//     }
-// }
 
 char* isSame(char* before, char* current){
     unsigned int before_offset;
@@ -194,9 +123,6 @@ int getLeafDir(contents *head,struct container** contain){
     }
     return 0;
 }
-void createRootTreeObject(unsigned char* hash,char* objectContext){
-
-}
 char* dirCheck(){
     char* objectContext;
     unsigned char* hash;
@@ -227,7 +153,6 @@ char* dirCheck(){
                 sprintf(objectContext+strlen(objectContext),"%02x",del->content->hash[i]);
             }
             red_black_delete(del);
-             fprintf(stderr,"complete delete\n");
         }
         up = upperDir(path);
         hash = hashchars(objectContext);
@@ -241,15 +166,152 @@ char* dirCheck(){
     fprintf(stderr,"root tree's hash : %s\n", objectContext);
     return objectContext;
 }
-void commit(){
+void Log(char* head,char* email, char* nick,char* parentCommit,char* commit,char* commitMsg){
+    FILE* HEAD;
+    FILE* log;
+    FILE* config;
+
+    char logPath[50]={0,};
+    char line[256];
+
+    sprintf(logPath,"./.VMS/log/heads/%s",head);
+    /* work of Logging */
+    if(access(logPath,F_OK) != -1){
+        log = fopen(logPath,"r+");
+        fseek(log,0,SEEK_END);
+        fprintf(log,"\n");
+    }else{
+        log = fopen(logPath,"w");
+    }
+    fprintf(log,"%s %s \t%s \t<%s> commit: %s",parentCommit, commit, nick+5,email+6,commitMsg);
+    fclose(log);
+     /* work of HEAD Update */
+}
+unsigned char* createCommitObject(char* email,char* nick,char* parentCommit,char* rootTree,char* commitMsg){
+    gzFile object;
+    unsigned char* hash;
+    char commit[512]={0,};
+    char dir[100];
+    char path[256];
+    unsigned char* sign;
+    char* encoded;
+
+    sprintf(commit,"parent %s\n",parentCommit);
+    sprintf(commit+strlen(commit),"commiter %s <%s>\n",nick+5,email+6);
+    hash = hashchars(commit);
+    sprintf(commit+strlen(commit),"msg %s",commitMsg);
+    // fprintf(stderr,"%s\n",commit);
+    sign = signification(commit);
+
+    Base64Encode(sign,128,&encoded);
+
+    sprintf(commit+strlen(commit),"key\n");
+    sprintf(commit+strlen(commit),"%s",encoded);
+    
+
+    fprintf(stderr,"%s\n",commit);
+
+
+    sprintf(dir,"./.VMS/objects/%02x%02x",hash[0],hash[1]);
+    sprintf(path,"%s/",dir);
+
+    for(int i=2; i < 32; i++){                // Hash to char*
+            sprintf(path+strlen(path), "%02x",hash[i]); 
+    }
+    if(access(dir, F_OK) != -1 ){     //first two char of hash dir is exixted
+        // fprintf(stderr,"%s -> ",path);
+        if(access(path, F_OK) != -1){  //Object is Existed
+                fprintf(stderr,"%s already up-to-date\n",path);
+                exit(1);
+        }
+    }else{
+        mkdir(dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+    }
+
+    object = gzopen(path,"wb");
+    if(object==NULL)
+        perror("gzwrite error");
+    if(gzwrite(object,commit,strlen(commit)) < 0)
+        perror("gzwrite error");
+    gzclose(object);
+    fprintf(stderr,"%s <- Commit object CREATED\n",path);
+    return hash;
+}
+void commit(char* commitMsg){
     char* rootTree;
+    FILE* HEAD;
+    FILE* HEADCommit;
+    FILE* config;
+    FILE* log;
+    unsigned char* hash;
+    char* commit;
+    char email[EMAIL_LENGHT];
+    char nick[NICK_LENGHT];
+    char headPath[256]={0,};
+    char logPath[256]={0,};
+    char *head = malloc(HEAD_NAME_LENGHT+6);
+    char parentCommit[COMMIT_HASH_LENGHT+1];
+    char line[1024];
+    /*load fils from index */
     loadIndex();
     if(ROOT==NILL)
         perror("./.VMS/index corrupted");
+    /* recursively create Tree Objects */
     rootTree = dirCheck();
+    /*-----------------------------------------------------------------*/
+    /* get HEAD */
+    HEAD = fopen("./.VMS/HEAD","r");
+    if(HEAD==NULL){
+        fprintf(stderr,"HEAD open error\n");
+        exit(1);
+    }
+    fseek(HEAD,6,SEEK_SET);
+    fgets(head,HEAD_NAME_LENGHT,HEAD);
+
+    /* get REAL HEAD */
+    snprintf(logPath,200,"./.VMS/log/heads/%s",head);
+    log = fopen(logPath,"r+");
+    /* head is not exist */
+    if(log == NULL){
+        for(int i=0;i<COMMIT_HASH_LENGHT;i++)
+            parentCommit[i]='0';
+    }
+    else{
+        while(!feof(log))
+            fgets(line,1024,log);
+        strncpy(parentCommit,line+65,COMMIT_HASH_LENGHT);
+    }
+
+    parentCommit[COMMIT_HASH_LENGHT]='\0';
+    /* get config */
+    config = fopen("./.VMS/Info","r");
+    fgets(email,EMAIL_LENGHT-1,config);
+    email[strlen(email)-1]='\0';
+    fgets(nick,NICK_LENGHT-1,config);
+    nick[strlen(nick)-1]='\0';
+    /* create commit object  & update real HEAD*/
+    hash = createCommitObject(email,nick,parentCommit,rootTree,commitMsg);
+    commit = hashToString(hash);
+    // fseek(HEADCommit, 0, SEEK_SET);
     
+    // HEADCommit = fopen(headPath,"r+");
+    // if(HEADCommit == NULL){
+    
+    snprintf(headPath,200,"./.VMS/refers/heads/%s",head);
+    HEADCommit = fopen(headPath,"w");
+    // }
+    // else{
+    //     fgets(parentCommit,COMMIT_HASH_LENGHT,HEADCommit);
+    // }
+    fprintf(HEADCommit,"%s",commit);
+    fclose(log);
+    fclose(HEAD);
+    fclose(HEADCommit);
+    fclose(config);
+    Log(head,email,nick,parentCommit,commit,commitMsg);
+    free(head);
 }
-void commitCmd(){
+void commitCmd(char* commitMsg){
     /* if index file is NOT exist */
     NILL = malloc(sizeof(contents));
     NILL->color = BLACK;
@@ -268,8 +330,13 @@ void commitCmd(){
         fprintf(stderr,"please INDEXING VMS first");
         return;
     } 
-    commit();
+    commit(commitMsg);
 }
 int main(int argc,char* argv[]){
-    commitCmd();
+    if(argc != 2){
+        fprintf(stderr,"usage : commit \"commit message\"\n");
+        return 0;
+    }
+    /* add consttrain*/
+    commitCmd(argv[1]);
 }
