@@ -36,8 +36,11 @@ void pushInfo(int sock,FILE* info){
 
 void pushPublicKey(int sock){
     char* publicKey;
+    int sigSize;
     publicKey = genPrivateKey();
-    _send(sock,publicKey,strlen(publicKey));
+    sigSize = strlen(publicKey);
+    _send(sock,&sigSize,sizeof(sigSize));
+    _send(sock,publicKey,sigSize);
 }
 void updateInfo(char* hash,FILE* info){
     fseek(info,0,SEEK_END);
@@ -54,12 +57,15 @@ void createRepo(int sock){
     FILE* info;
 
     fpirntf(stdout,"NOTIFICATION:CONNECTING SERV\n");
-    if(send(sock,&msg,1,0) < 1){
+    if(send(sock,&msg,1,0) < 1){ //hi
         dieWithError("createRepo msg Send failed");
     }
-    if(recv(sock,&msg,1,0) < 1){
+    if(recv(sock,&msg,1,0) < 1){ //oh hi
         dieWithError("CreateRepo msg recv failed");
     }
+    if(msg!=CREATE_REPO)
+        dieWithError("SERV IS NOT READY");
+    
     fprintf(stdout,"NOTIFICATION:CONNECTED......\n");
     pushPublicKey(sock);
 
@@ -67,15 +73,7 @@ void createRepo(int sock){
     if(msg==0){
         dieWithError("NOTIFICATION:Already Repository have SET\n");
     }
-    fprintf(stdout,"Enter REPO-NAME -> ");
-    fgets(repoName,REPO_NAME_LENGHT-1,stdin);
-    repoName[strlen(repoName)-1] ='\0';
-
-    info =fopen("./.VMS/info","r+");
-    if(info == NULL)
-        dieWithError(".VMS interrupted");
-    pushInfo(sock,info);
-
+    
     if(recv(sock,repoHash,sizeof(repoHash),0) < sizeof(repoHash)){
         dieWithError("recved few msg than expected");
     }

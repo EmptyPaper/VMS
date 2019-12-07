@@ -8,18 +8,19 @@
 
 
 #include "attr.h"
+#include "send_recv.h"
 
 #define MAXPENDING 5
 
 pthread_t tid;
 
-typdef struct _user{
+typedef struct _user{
     char nick[NICK_LENGHT];
     char email[EMAIL_LENGHT];
     char* publicKey;
-};
+}user;
 
-void service(void* clntSock){
+void* service(void* clntSock){
     int sock = (int)clntSock;
     /* -> handle client socket */
 }
@@ -39,7 +40,7 @@ int main(int argc,char* argv[]){
     setsockopt(servSock,SOL_SOCKET,SO_REUSEADDR,&option,sizeof(option));
 
     memset(&servAddr,0,sizeof(servAddr));
-    servAddr.sin_addr = AF_INET;
+    servAddr.sin_family = AF_INET;
     servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
     servAddr.sin_port = htons(servPort);
 
@@ -56,8 +57,8 @@ int main(int argc,char* argv[]){
         if(pthread_create(&tid,NULL,service,(void*)clntSock) < 0)
             dieWithError("thread creation failed");
         else{
-            printf("Client ip : %s\n",inet_ntoa(echoClntAddr.sin_addr));
-            printf("port : %d\n",(int)echoClntAddr.sin_port);
+            printf("Client ip : %s\n",inet_ntoa(clntAddr.sin_addr));
+            printf("port : %d\n",(int)clntAddr.sin_port);
             fprintf(stdout,"----------------------------------------------\n");
             /* add more info here */
         } 

@@ -7,6 +7,5 @@
 #define REPO_HASH_LENGH 64
 
 
-
 void dieWithError(char* msg);
 
