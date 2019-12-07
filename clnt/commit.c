@@ -9,7 +9,6 @@
 #include "genKey.h"
 #include "attr.h"
 
-
 char* upperDir(char* path){
     char* dir = malloc(255);
     char *c = strrchr(path,'/');
@@ -18,8 +17,6 @@ char* upperDir(char* path){
     dir[offset] = '\0';
     return dir;
 }
-// void vector(){
-
 char* isSame(char* before, char* current){
     unsigned int before_offset;
     unsigned int current_offset;

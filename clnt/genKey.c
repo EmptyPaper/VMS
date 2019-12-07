@@ -3,6 +3,7 @@
 #include <string.h>
 #include "genKey.h"
 #include "hash.h"
+#include "attr.h"
 
 RSA * createRSA(unsigned char * key,int public){
     RSA *rsa= NULL;
@@ -32,7 +33,7 @@ void genPrivateKey(){
     char *pem_key;
 
     RSA *rsa = RSA_generate_key(kBits, kExp, 0, 0);
-    FILE *fp = fopen("user.key","wb");
+    FILE *fp = fopen("./.VMS/user.key","wb");
     if(fp == NULL)
         perror("file open error");
     
@@ -59,7 +60,7 @@ char* genPublicKey(){
     RSA *rsa= NULL;
     BIO *keybio;
     BIO *bio = BIO_new(BIO_s_mem());
-    fp = fopen("user.key","rb");
+    fp = fopen("./.VMS/user.key","rb");
     if(fp==NULL)
         perror("user.Key is NOT EXIST");
 
@@ -91,11 +92,12 @@ unsigned char* signification(char* msg){
     unsigned char* digest;
     unsigned int siglen;
     unsigned char* sign;
+
     digest = hashchars(msg);
     RSA *rsa=NULL;
-    FILE* fp = fopen("user.key","rb");
+    FILE* fp = fopen("./.VMS/user.key","rb");
     if(fp==NULL)
-        perror("user.Key is NOT EXIST");
+        dieWithError("user.Key is NOT EXIST");
 
     rsa = PEM_read_RSAPrivateKey(fp, &rsa,NULL, NULL);
 

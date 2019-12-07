@@ -7,7 +7,6 @@
 #include <string.h>
 #include "genKey.h"
 int init();
-
 int init(){
     struct dirent* ent;
     DIR *dir = opendir("./");

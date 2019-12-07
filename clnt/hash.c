@@ -69,51 +69,6 @@ int Base64Encode(const unsigned char* buffer, size_t length, char** b64text) { /
 	return (0); //success
 }
 
-
-
-// int main(int argc,char* argv[]){
-// //     char * data = "Hello";
-//     unsigned char ** hashString = malloc(sizeof(char*)*3);
-// //     char * code;
-//     unsigned char output[97];
-//     unsigned char * z;
-
-//     FILE** fp;
-//     fp = (FILE**)malloc(sizeof(FILE*)*3);
-//     fp[0] = fopen("./init.c","rb");
-//     fp[1] = fopen("./ds.h","rb");
-//     fp[2] = fopen("./HEAD","rb");
-
-//     // fp[1] = fopen("./init.c", "rb");
-//     if(fp == NULL)
-//         perror("file error");
-//     for(int i =0; i< 3; i++){
-//         memcpy(output+i*32,hashFile(fp[i]),32);
-//         for(int j =0 ; j < 32; j++){
-//             fprintf(stderr, "%02x", output[i*32+j]);
-//         }
-//         fprintf(stderr,"\n");
-//     }
-//     output[96] = '\0';
-//     for(int i = 0; i < 96; i++){
-//         fprintf(stderr,"%d",output[i]);
-//     }
-//     fprintf(stderr,"\n");
-//     z = hashchars(output);
-//     // output = hashStrings(hashString);
-
-//     for(int j =0 ; j < 32; j++){
-//             fprintf(stderr, "%02x", z[j]);
-//     }
-//     fprintf(stderr,"\n");
-//     // hashString [0]= hashSha256(fp);
-//     // fprintf(stderr,"./init.c");
-//     // for(int i =0 ; i < 32; i++){
-//     //     fprintf(stderr, "%x", hashString[i]);
-//     // }
-//      printf("\n");
-// }
-
 void* hashFile(char *path){
     // size_t size = strlen(data);
     FILE* fp = fopen(path,"rb");
@@ -161,3 +116,47 @@ void *hashchars(void* string){
     SHA256_Final(hashout, &ctx);
     return hashout;
 }
+
+
+// int main(int argc,char* argv[]){
+// //     char * data = "Hello";
+//     unsigned char ** hashString = malloc(sizeof(char*)*3);
+// //     char * code;
+//     unsigned char output[97];
+//     unsigned char * z;
+
+//     FILE** fp;
+//     fp = (FILE**)malloc(sizeof(FILE*)*3);
+//     fp[0] = fopen("./init.c","rb");
+//     fp[1] = fopen("./ds.h","rb");
+//     fp[2] = fopen("./HEAD","rb");
+
+//     // fp[1] = fopen("./init.c", "rb");
+//     if(fp == NULL)
+//         perror("file error");
+//     for(int i =0; i< 3; i++){
+//         memcpy(output+i*32,hashFile(fp[i]),32);
+//         for(int j =0 ; j < 32; j++){
+//             fprintf(stderr, "%02x", output[i*32+j]);
+//         }
+//         fprintf(stderr,"\n");
+//     }
+//     output[96] = '\0';
+//     for(int i = 0; i < 96; i++){
+//         fprintf(stderr,"%d",output[i]);
+//     }
+//     fprintf(stderr,"\n");
+//     z = hashchars(output);
+//     // output = hashStrings(hashString);
+
+//     for(int j =0 ; j < 32; j++){
+//             fprintf(stderr, "%02x", z[j]);
+//     }
+//     fprintf(stderr,"\n");
+//     // hashString [0]= hashSha256(fp);
+//     // fprintf(stderr,"./init.c");
+//     // for(int i =0 ; i < 32; i++){
+//     //     fprintf(stderr, "%x", hashString[i]);
+//     // }
+//      printf("\n");
+// }

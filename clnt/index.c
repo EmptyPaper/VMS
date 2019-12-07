@@ -10,9 +10,6 @@ void InsertRepairTree(contents* a);
 void InsertCase4Step2(contents* n);
 
 
-/* Global, since all function will access them */
-
-
 
 /* Print tree keys by inorder tree walk */
 

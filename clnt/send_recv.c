@@ -1,0 +1,15 @@
+#include <sys/socket.h> 
+#include <stdio.h>
+
+
+void _send(int sock, void* item, int size){
+    if(send(sock,item,size,0) < size)
+        dieWithError("send few data than expected");
+}
+void _recv(int sock, void* item, int size){
+    int recvByte;
+    if((recvByte = recv(sock,item,size,0)) < size)
+        dieWithError("recv few data than expected");
+}
+
+
