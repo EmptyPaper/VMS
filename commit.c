@@ -47,7 +47,7 @@ char* isSame(char* before, char* current){
     }
     return root;
 }
-void createTreeObject(unsigned char* hash,char* context,char* up){
+int createTreeObject(unsigned char* hash,char* context,char* up){
     gzFile object;
     int readByte;
     char dir[100];
@@ -88,6 +88,7 @@ void createTreeObject(unsigned char* hash,char* context,char* up){
     content->conflict = 0;
     // fprintf(stderr,"new tree object : %s\n",content->name);
     red_black_insert(content);
+    return flag;
 }
 int getLeafDir(contents *head,struct container** contain){
     static int beforeDepth = 0;
@@ -128,6 +129,7 @@ char* dirCheck(){
     unsigned char* hash;
     char objectName[256];
     int flag=-1;
+    int dup=-1;
     contents *del;
     char* path;
     char* up;
@@ -156,12 +158,17 @@ char* dirCheck(){
         }
         up = upperDir(path);
         hash = hashchars(objectContext);
-        createTreeObject(hash,objectContext,up);
+        dup=createTreeObject(hash,objectContext,up);
         free(objectContext);
     }
+   
     objectContext = malloc(sizeof(char)*65);
     for(int i = 0; i<32;i++){
         sprintf(objectContext+strlen(objectContext),"%02x",hash[i]);
+    }
+    if(dup == 1){
+        fprintf(stderr,"already up-to-date hash -> %s\n",objectContext);
+        exit(1);
     }
     fprintf(stderr,"root tree's hash : %s\n", objectContext);
     return objectContext;
@@ -196,7 +203,9 @@ unsigned char* createCommitObject(char* email,char* nick,char* parentCommit,char
     unsigned char* sign;
     char* encoded;
 
+    rootTree[64]='0';
     sprintf(commit,"parent %s\n",parentCommit);
+    sprintf(commit+strlen(commit),"tree %s\n",rootTree);
     sprintf(commit+strlen(commit),"commiter %s <%s>\n",nick+5,email+6);
     hash = hashchars(commit);
     sprintf(commit+strlen(commit),"msg %s",commitMsg);
@@ -251,6 +260,7 @@ void commit(char* commitMsg){
     char logPath[256]={0,};
     char *head = malloc(HEAD_NAME_LENGHT+6);
     char parentCommit[COMMIT_HASH_LENGHT+1];
+    // char dup[256]={0,};
     char line[1024];
     /*load fils from index */
     loadIndex();
@@ -258,6 +268,12 @@ void commit(char* commitMsg){
         perror("./.VMS/index corrupted");
     /* recursively create Tree Objects */
     rootTree = dirCheck();
+    // sprintf(dup,"./.VMS/objects/%c%c%c%c/",rootTree[0],rootTree[1],rootTree[2],rootTree[3]);
+    // sprintf(dup+strlen(dup),"%s",rootTree+4);
+    // if(access(dup,F_OK)!=-1){
+    //     fprintf(stderr,"already up-to-date\n");
+    //     exit(1);
+    // }
     /*-----------------------------------------------------------------*/
     /* get HEAD */
     HEAD = fopen("./.VMS/HEAD","r");
@@ -315,6 +331,7 @@ void commitCmd(char* commitMsg){
     /* if index file is NOT exist */
     NILL = malloc(sizeof(contents));
     NILL->color = BLACK;
+    NILL->right = NILL->left =NULL;
     ROOT = NILL;
     PUSHCOUNT = 0;
     

@@ -97,7 +97,7 @@ void red_black_insert(indexContent* content){
 	if(y == NILL){
 		ROOT = z;
 	}
-	if(depth > tempDepth){
+	else if(depth > tempDepth){
 		y->left = z;
 	}
 	else if(depth < tempDepth){
@@ -211,9 +211,8 @@ void red_black_insert_fixup(contents *z){
 void left_rotate(contents *x){
 	contents *y;
 	y = x->right;
-	if(x==NILL || x->right==NILL){
+	if(y==NILL || x==NILL || x->left == NILL)
 		return;
-	}
 	/* Make y's left child x's right child */
 	x->right = y->left;
 	if(y->left != NILL){
@@ -254,9 +253,8 @@ void right_rotate(contents *x){
 
 	y = x->left;
 	/* Make y's right child x's left child */
-	if(x== NILL || x->left){
+	if(y == NILL || x ==NILL || x->right ==NILL)
 		return;
-	}
 	x->left = y->right;
 
 	if(y->right != NILL){
@@ -326,11 +324,11 @@ void red_black_delete(contents *z){
 			y->right = z->right;
 			y->right->parent = y;
 		}
-
 		red_black_transplant(z, y);
 		y->left = z->left;
 		y->left->parent = y;
 		y->color = z->color;
+		//  x=y;
 	}
 	if(yOriginalColor == BLACK){
 		red_black_delete_fixup(x);
@@ -367,7 +365,7 @@ void red_black_delete(contents *z){
 
 void red_black_delete_fixup(contents *x){
 	contents *w;
-	while(x != ROOT && x->color == BLACK){
+	while(x != ROOT && x->color == BLACK && x!=NILL){
 		// fprintf(stderr,"dbg");
 		if(x == x->parent->left){
 			w = x->parent->right;
