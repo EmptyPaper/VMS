@@ -82,7 +82,7 @@ char* genPublicKey(){
     public_key = calloc(PKeyLen+1,1);
     BIO_read(bio,public_key,PKeyLen);
     fclose(fp);
-    BIO_free_all(keybio);
+    // BIO_free_all(keybio);
     RSA_free(rsa);
     return public_key;
 }

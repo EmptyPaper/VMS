@@ -12,6 +12,9 @@
 
 #define MAXPENDING 5
 
+void handleClnt(int sock);
+
+
 pthread_t tid;
 
 typedef struct _user{
@@ -22,6 +25,7 @@ typedef struct _user{
 
 void* service(void* clntSock){
     int sock = (int)clntSock;
+    handleClnt(sock);
     /* -> handle client socket */
 }
 

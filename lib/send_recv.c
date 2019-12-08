@@ -1,6 +1,6 @@
 #include <sys/socket.h> 
 #include <stdio.h>
-
+#include "attr.h"
 
 void _send(int sock, void* item, int size){
     if(send(sock,item,size,0) < size)

@@ -25,7 +25,7 @@ char* getPublicKey(int sock){
     _recv(sock,&sigSize,sizeof(sigSize));
     publicKey = malloc(sigSize);
     while(recvByte < sigSize){
-        recvByte+=_recv(sock,publicKey+recvByte,BUFSIZ);
+        recvByte+=_recv(sock,publicKey+recvByte,SIGBUF);
     }
     digest = hashchars(publicKey);
     hash = hashToString(digest);
@@ -45,7 +45,10 @@ char* getPublicKey(int sock){
         sprintf(path+strlen(path),"/%s",hash+4);
         mkdir(path, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     }
+    msg=CREATE_REPO;
+    _send(sock,&msg,1);
     _send(sock,hash,64);
+    fprintf(stderr,"LOG:REPO hash is sended\n");
     perm = fopen(hash,"w");
     fprintf(perm,"%s",hash);
 
@@ -59,7 +62,7 @@ void init(char* path){
     char log[100]={0,};
     sprintf(refers,"%s/refers",path);
     mkdir(refers, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
-    sprintf(path+strlen(path),"/heads");
+    sprintf(refers+strlen(refers),"/heads");
     mkdir(refers, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     sprintf(objects,"%s/objects",path);
@@ -75,6 +78,7 @@ void createRepository(int sock){
     int sigSize;
     char* path;
     char buf[SIGBUF];
+    msg = CREATE_REPO;
 
     _send(sock,&msg,1); //oh 
     path = getPublicKey(sock);

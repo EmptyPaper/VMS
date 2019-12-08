@@ -28,7 +28,7 @@ void pushInfo(int sock,FILE* info){
 
     fgets(line,256,info);
     strncpy(nick,line+5,NICK_LENGHT);
-    nick[NICK_LENGHT=1] = '\0';
+    nick[NICK_LENGHT-1] = '\0';
 
     _send(sock,email,EMAIL_LENGHT);
     _send(sock,nick,NICK_LENGHT);
@@ -37,7 +37,7 @@ void pushInfo(int sock,FILE* info){
 void pushPublicKey(int sock){
     char* publicKey;
     int sigSize;
-    publicKey = genPrivateKey();
+    publicKey = genPublicKey();
     sigSize = strlen(publicKey);
     _send(sock,&sigSize,sizeof(sigSize));
     _send(sock,publicKey,sigSize);
@@ -48,15 +48,15 @@ void updateInfo(char* hash,FILE* info){
     fclose(info);
 }
 
-void createRepo(int sock){
+void createRepository(int sock){
     unsigned char msg;
     char repoName[REPO_NAME_LENGHT];
     char repoHash[REPO_HASH_LENGH+1];
-
+    int recvByte=0;
     msg = CREATE_REPO;
     FILE* info;
 
-    fpirntf(stdout,"NOTIFICATION:CONNECTING SERV\n");
+    fprintf(stdout,"NOTIFICATION:CONNECTING SERV\n");
     if(send(sock,&msg,1,0) < 1){ //hi
         dieWithError("createRepo msg Send failed");
     }
@@ -73,20 +73,21 @@ void createRepo(int sock){
     if(msg==0){
         dieWithError("NOTIFICATION:Already Repository have SET\n");
     }
-    
-    if(recv(sock,repoHash,sizeof(repoHash),0) < sizeof(repoHash)){
-        dieWithError("recved few msg than expected");
+    // if(recv(sock,repoHash,sizeof(repoHash),0) < sizeof(repoHash)){
+    //     dieWithError("recved few msg than eeeeexpected");
+    // }
+    while(recvByte<REPO_HASH_LENGH){
+        recvByte+=_recv(sock,repoHash+recvByte,SIGBUF);
+        repoHash[recvByte]='\0';
     }
+    info=fopen("./.VMS/info","r+");
     updateInfo(repoHash,info);
+    fprintf(stdout,"YOUR_REPO:%s\n",repoHash);
 }
 
-void createRepoCmd(int argc,char* argvp[],int sock){
-    if(access("./.VMS/",F_OK) == -1){
-        dieWithError("INITIATE VMS FIRST!\n");
-    }
-    createRepo(sock);
-}
-
-int  main(int argc,char* argv[]){
-    createRepoCmd(argc,argv);
-}
+// void createRepoCmd(int argc,char* argvp[],int sock){
+//     if(access("./.VMS/",F_OK) == -1){
+//         dieWithError("INITIATE VMS FIRST!\n");
+//     }
+//     create(sock);
+// }

@@ -1,8 +1,9 @@
 CC = gcc
-CFLAGS = -std=c11 -g -I../lib -lssl -lcrypto -lz
+CFLAGS = -std=c11 -g -I../lib -lssl -lcrypto -lz 
 
-OBJ = servService.o createRepository.o lib/handleClnt.o ../lib/hash.o ../lib/send_recv.o ../lib/dieWithError.o
-TARGET = servService
+OBJ = clntService.o createRepository.o ../lib/hash.o ../lib/send_recv.o ../lib/dieWithError.o ../lib/genKey.o
+TARGET = clntService
+
 
 $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $(OBJ) 
