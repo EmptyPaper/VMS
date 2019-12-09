@@ -130,12 +130,12 @@ char* dirCheck(){
     contents *del;
     char* path;
     char* up;
+    int first =0;
     struct container** contain = malloc(sizeof(struct container*));
     *contain = NULL;
     while(flag != 0){
         flag = getLeafDir(ROOT,contain);
         objectContext = (char*)malloc(sizeof(char)*128*PUSHCOUNT);
-        sprintf(objectContext,"Tree");
         while((del = pop(contain)) != NULL){
             path = del->content->name;
             if(!strcmp(del->content->name,"./commit")){
@@ -146,15 +146,17 @@ char* dirCheck(){
             // fprintf(stderr,"new paprent %s %d\n",del->parent->parent->content->name ,del->parent->parent->color);
             }
 
-            sprintf(objectContext+strlen(objectContext),"\n");
             sprintf(objectContext+strlen(objectContext),"%s %s ",del->content->type, del->content->name);
             for(int i = 0; i<32;i++){
                 sprintf(objectContext+strlen(objectContext),"%02x",del->content->hash[i]);
             }
+            sprintf(objectContext+strlen(objectContext),"\n");
             red_black_delete(del);
         }
+        objectContext[strlen(objectContext)-1]='\0';
         up = upperDir(path);
         hash = hashchars(objectContext);
+
         dup=createTreeObject(hash,objectContext,up);
         free(objectContext);
     }
@@ -200,10 +202,10 @@ unsigned char* createCommitObject(char* email,char* nick,char* parentCommit,char
     unsigned char* sign;
     char* encoded;
 
-    rootTree[64]='0';
+    rootTree[OBJECT_NAME_LENGHT]='\0';
     sprintf(commit,"parent %s\n",parentCommit);
-    sprintf(commit+strlen(commit),"tree %s\n",rootTree);
-    sprintf(commit+strlen(commit),"commiter %s <%s>\n",nick+5,email+6);
+    sprintf(commit+strlen(commit),"tree %s",rootTree);
+    sprintf(commit+strlen(commit),"\ncommiter %s <%s>\n",nick+5,email+6);
     hash = hashchars(commit);
     sprintf(commit+strlen(commit),"msg %s",commitMsg);
     // fprintf(stderr,"%s\n",commit);

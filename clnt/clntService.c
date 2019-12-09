@@ -26,7 +26,8 @@ void clntService(int argc,char*argv[]){
     servAddr.sin_port = htons(servPort);
     if(connect(sock,(struct sockaddr*) &servAddr, sizeof(servAddr))<0)
         dieWithError("connet() failed");
-    createRepository(sock);
+
+    pushCmd(sock);
     close(sock);
 }
 

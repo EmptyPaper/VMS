@@ -34,21 +34,13 @@ void pushInfo(int sock,FILE* info){
     _send(sock,nick,NICK_LENGHT);
 }
 
-void pushPublicKey(int sock){
-    char* publicKey;
-    int sigSize;
-    publicKey = genPublicKey();
-    sigSize = strlen(publicKey);
-    _send(sock,&sigSize,sizeof(sigSize));
-    _send(sock,publicKey,sigSize);
-}
 void updateInfo(char* hash,FILE* info){
     fseek(info,0,SEEK_END);
     fprintf(info,"%s",hash);
     fclose(info);
 }
 
-void createRepository(int sock){
+void createRepositoryCmd(int sock){
     unsigned char msg;
     char repoName[REPO_NAME_LENGHT];
     char repoHash[REPO_HASH_LENGH+1];
