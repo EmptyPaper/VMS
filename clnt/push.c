@@ -26,22 +26,6 @@
 */
 //head
 
-void pushRepoHash(sock){
-    char repoHash[REPO_HASH_LENGH+1]={0,};
-    char line[128];
-    FILE* fp = fopen("./.VMS/info","r");
-    while(!feof(fp)){
-        fgets(line,128,fp);
-    }
-    strncpy(repoHash,line+5,64);
-    repoHash[REPO_HASH_LENGH]='\0';
-    fprintf(stderr,"%s",repoHash);
-    if(strlen(repoHash) == 0){
-        dieWithError("CREATE REPOSITORY FIRST\n");
-    }
-    _send(sock,repoHash,REPO_HASH_LENGH);
-    fclose(fp);
-}
 
 char* getHead(int sock){
     FILE* HEAD;
@@ -53,7 +37,7 @@ char* getHead(int sock){
     _send(sock,head,HEAD_NAME_LENGHT+1);//4
     return head;
 }
-char* getCommitObject(char* head,int sock){
+char* getCommitObjectForPush(char* head,int sock){
     gzFile commit;
     FILE* refer;
     unsigned char msg=0;
@@ -89,12 +73,17 @@ char* getCommitObject(char* head,int sock){
     sprintf(objectPath,"./.VMS/objects/%c%c%c%c",commitHash[0],commitHash[1],commitHash[2],commitHash[3]);
     sprintf(objectPath+strlen(objectPath),"/%s",commitHash+4);
     commit = gzopen(objectPath,"r");
-    for(int i;i<2;i++){
+    for(int i=0;i<2;i++){
         gzgets(commit,buf,128);
     }
 
     strncpy(treeHash,buf+5,OBJECT_NAME_LENGHT);
     treeHash[OBJECT_NAME_LENGHT]='\0';
+
+    content = malloc(sizeof(indexContent));
+    strncpy(content->name,treeHash,64);
+    content->name[64]='\0';
+    red_black_insert(content);
 
     gzclose(commit);
     fclose(refer);
@@ -109,7 +98,7 @@ int objectFactory(char* treeHash){
     gzFile object;
     char buf[256];
     int instanceLen;
-    static int count=1;
+    static int count=2;
     char* blank;
     int offset;
     indexContent* content;
@@ -236,7 +225,7 @@ void pushCmd(int sock){
     }
 
     head = getHead(sock);//4
-    treeHash = getCommitObject(head,sock);//5
+    treeHash = getCommitObjectForPush(head,sock);//5
     count = objectFactory(treeHash);
     _send(sock,&count,sizeof(int));
     pushObject(ROOT,count,sock);

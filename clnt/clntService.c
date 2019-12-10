@@ -27,7 +27,16 @@ void clntService(int argc,char*argv[]){
     if(connect(sock,(struct sockaddr*) &servAddr, sizeof(servAddr))<0)
         dieWithError("connet() failed");
 
-    pushCmd(sock);
+    if(argc==2){
+        if(!strcmp(argv[1],"push"))
+            pushCmd(sock);
+    }
+    if(argc==3){
+        if(!strcmp(argv[1],"pull"))
+            pullCmd(sock,argv[2]);
+    }
+
+
     close(sock);
 }
 

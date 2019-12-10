@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -std=c11 -g -I../lib -lssl -lcrypto -lz 
 
-OBJ = clntService.o createRepository.o push.o ../lib/hash.o ../lib/send_recv.o ../lib/attr.o ../lib/genKey.o ../lib/index.o
+OBJ = clntService.o createRepository.o pull.o push.o ../lib/hash.o ../lib/send_recv.o ../lib/attr.o ../lib/genKey.o ../lib/index.o ../lib/updateFile.c
 TARGET = clntService
 
 COBJ = commit.o ../lib/index.o ../lib/hash.o ../lib/genKey.o ../lib/attr.o
